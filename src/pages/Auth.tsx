@@ -21,7 +21,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/personalize');
+        navigate('/chat');
       }
     };
     checkUser();
@@ -43,7 +43,7 @@ const Auth = () => {
         }
 
         toast.success('Login realizado com sucesso!');
-        navigate('/personalize');
+        navigate('/chat');
       } else {
         if (password !== confirmPassword) {
           toast.error('As senhas não coincidem');
@@ -54,7 +54,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/personalize`
+            emailRedirectTo: `${window.location.origin}/chat`
           }
         });
 
@@ -74,7 +74,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-8 bg-white shadow-lg">
         <div className="text-center mb-8">
           <div className="bg-gradient-to-r from-blue-500 to-green-500 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             <MessageCircle className="h-8 w-8 text-white" />
@@ -89,36 +89,45 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              E-mail
+            </label>
             <Input
               type="email"
-              placeholder="E-mail"
+              placeholder="Digite seu e-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full"
+              className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
             />
           </div>
           
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Senha
+            </label>
             <Input
               type="password"
-              placeholder="Senha"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full"
+              className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
             />
           </div>
 
           {!isLogin && (
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar Senha
+              </label>
               <Input
                 type="password"
-                placeholder="Confirmar senha"
+                placeholder="Confirme sua senha"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full"
+                className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
               />
             </div>
           )}
@@ -126,7 +135,7 @@ const Auth = () => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+            className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
           >
             {isLoading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar conta')}
           </Button>
@@ -136,7 +145,7 @@ const Auth = () => {
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-500 hover:text-blue-600 text-sm"
+            className="text-blue-500 hover:text-blue-600 text-sm underline"
           >
             {isLogin ? 'Não tem conta? Criar nova conta' : 'Já tem conta? Fazer login'}
           </button>

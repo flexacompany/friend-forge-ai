@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -246,7 +245,7 @@ const Personalize = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Lista de Avatares */}
           <div>
-            <Card className="p-6">
+            <Card className="p-6 bg-white shadow-lg">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-2">
                   <User className="h-5 w-5 text-blue-500" />
@@ -320,7 +319,7 @@ const Personalize = () => {
           {/* Formulário de Criação/Edição */}
           {isCreating && (
             <div>
-              <Card className="p-6">
+              <Card className="p-6 bg-white shadow-lg">
                 <div className="flex items-center space-x-2 mb-6">
                   <Sparkles className="h-5 w-5 text-blue-500" />
                   <h2 className="text-lg font-semibold">
@@ -331,18 +330,18 @@ const Personalize = () => {
                 <div className="space-y-6">
                   {/* Nome do Avatar */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Nome do Avatar</label>
+                    <label className="text-sm font-medium mb-2 block text-gray-700">Nome do Avatar</label>
                     <Input
                       value={formData.nome}
                       onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                      placeholder="Digite um nome..."
-                      className="w-full"
+                      placeholder="Digite um nome para seu avatar..."
+                      className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                     />
                   </div>
 
                   {/* Personalidade */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Tipo de Personalidade</label>
+                    <label className="text-sm font-medium mb-3 block text-gray-700">Tipo de Personalidade</label>
                     <div className="space-y-3">
                       {PERSONALITY_TYPES.map((personality) => (
                         <div
@@ -350,14 +349,14 @@ const Personalize = () => {
                           className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                             formData.personalidade === personality.id 
                               ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-gray-200 hover:border-gray-300 bg-white'
                           }`}
                           onClick={() => setFormData(prev => ({ 
                             ...prev, 
                             personalidade: personality.id as 'friend' | 'consultant' | 'colleague'
                           }))}
                         >
-                          <h3 className="font-medium">{personality.name}</h3>
+                          <h3 className="font-medium text-gray-900">{personality.name}</h3>
                           <p className="text-sm text-gray-600">{personality.description}</p>
                         </div>
                       ))}
@@ -366,39 +365,39 @@ const Personalize = () => {
 
                   {/* Tom de Voz */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Tom de Voz</label>
-                    <div className="grid grid-cols-1 gap-2">
+                    <label className="text-sm font-medium mb-3 block text-gray-700">Tom de Voz</label>
+                    <div className="grid grid-cols-1 gap-3">
                       {TONE_OPTIONS.map((tone) => (
-                        <Button
+                        <div
                           key={tone.id}
-                          variant={formData.tom === tone.id ? "default" : "outline"}
-                          size="sm"
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            formData.tom === tone.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
                           onClick={() => setFormData(prev => ({ 
                             ...prev, 
                             tom: tone.id as 'friendly' | 'formal' | 'playful'
                           }))}
-                          className="justify-start text-left"
                         >
-                          <div>
-                            <div className="font-medium">{tone.name}</div>
-                            <div className="text-xs opacity-75">{tone.description}</div>
-                          </div>
-                        </Button>
+                          <div className="font-medium text-gray-900">{tone.name}</div>
+                          <div className="text-sm text-gray-600">{tone.description}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Avatar Visual */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Avatar Visual</label>
+                    <label className="text-sm font-medium mb-3 block text-gray-700">Avatar Visual</label>
                     <div className="grid grid-cols-4 gap-3">
                       {AVATAR_OPTIONS.map((avatar) => (
                         <button
                           key={avatar}
-                          className={`p-3 border-2 rounded-lg text-2xl flex items-center justify-center transition-colors ${
+                          className={`p-3 border-2 rounded-lg text-2xl flex items-center justify-center transition-colors bg-white ${
                             formData.avatar === avatar 
                               ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 bg-white hover:border-gray-300'
+                              : 'border-gray-200 hover:border-gray-300'
                           }`}
                           onClick={() => setFormData(prev => ({ ...prev, avatar }))}
                         >
@@ -414,7 +413,7 @@ const Personalize = () => {
                     <Button
                       onClick={handleSaveAvatar}
                       disabled={isLoading}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
                     >
                       {isLoading ? 'Salvando...' : (editingAvatar ? 'Atualizar Avatar' : 'Salvar Avatar')}
                     </Button>

@@ -56,11 +56,11 @@ const App = () => {
           <Routes>
             <Route 
               path="/" 
-              element={session ? <Navigate to="/personalize" replace /> : <Navigate to="/auth" replace />} 
+              element={session ? <Navigate to="/chat" replace /> : <Navigate to="/auth" replace />} 
             />
             <Route 
               path="/auth" 
-              element={!session ? <Auth /> : <Navigate to="/personalize" replace />} 
+              element={!session ? <Auth /> : <Navigate to="/chat" replace />} 
             />
             <Route 
               path="/personalize" 
