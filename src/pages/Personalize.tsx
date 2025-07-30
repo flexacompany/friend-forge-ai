@@ -55,10 +55,15 @@ const Personalize = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    nome: string;
+    personalidade: 'friend' | 'consultant' | 'colleague';
+    tom: 'friendly' | 'formal' | 'playful';
+    avatar: string;
+  }>({
     nome: '',
-    personalidade: 'friend' as const,
-    tom: 'friendly' as const,
+    personalidade: 'friend',
+    tom: 'friendly',
     avatar: '🤖'
   });
 
@@ -82,7 +87,17 @@ const Personalize = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAvatares(data || []);
+      
+      // Type assertion to ensure proper typing
+      const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
+        id: avatar.id,
+        nome: avatar.nome,
+        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague',
+        tom: avatar.tom as 'friendly' | 'formal' | 'playful',
+        avatar: avatar.avatar
+      }));
+      
+      setAvatares(typedAvatares);
     } catch (error) {
       console.error('Erro ao carregar avatares:', error);
       toast.error('Erro ao carregar avatares');
@@ -337,7 +352,10 @@ const Personalize = () => {
                               ? 'border-blue-500 bg-blue-50' 
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
-                          onClick={() => setFormData(prev => ({ ...prev, personalidade: personality.id as any }))}
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            personalidade: personality.id as 'friend' | 'consultant' | 'colleague'
+                          }))}
                         >
                           <h3 className="font-medium">{personality.name}</h3>
                           <p className="text-sm text-gray-600">{personality.description}</p>
@@ -355,7 +373,10 @@ const Personalize = () => {
                           key={tone.id}
                           variant={formData.tom === tone.id ? "default" : "outline"}
                           size="sm"
-                          onClick={() => setFormData(prev => ({ ...prev, tom: tone.id as any }))}
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            tom: tone.id as 'friendly' | 'formal' | 'playful'
+                          }))}
                           className="justify-start text-left"
                         >
                           <div>

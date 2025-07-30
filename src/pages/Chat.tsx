@@ -84,10 +84,20 @@ const Chat = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAvatares(data || []);
       
-      if (data && data.length > 0) {
-        setSelectedAvatarId(data[0].id);
+      // Type assertion to ensure proper typing
+      const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
+        id: avatar.id,
+        nome: avatar.nome,
+        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague',
+        tom: avatar.tom as 'friendly' | 'formal' | 'playful',
+        avatar: avatar.avatar
+      }));
+      
+      setAvatares(typedAvatares);
+      
+      if (typedAvatares && typedAvatares.length > 0) {
+        setSelectedAvatarId(typedAvatares[0].id);
       }
     } catch (error) {
       console.error('Erro ao carregar avatares:', error);
