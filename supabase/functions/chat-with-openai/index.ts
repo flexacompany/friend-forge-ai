@@ -58,6 +58,7 @@ serve(async (req) => {
     const { message, avatarConfig } = await req.json();
 
     if (!openAIApiKey) {
+      console.error('OpenAI API key not found in environment variables');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -84,10 +85,18 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error response:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Unexpected OpenAI response structure:', data);
+      throw new Error('Invalid response from OpenAI API');
+    }
+
     const aiResponse = data.choices[0].message.content;
 
     console.log('Resposta da OpenAI:', aiResponse);
