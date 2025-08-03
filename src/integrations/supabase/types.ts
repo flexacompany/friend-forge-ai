@@ -17,8 +17,10 @@ export type Database = {
       avatares: {
         Row: {
           avatar: string
+          background: string | null
           created_at: string
           id: string
+          interests: string | null
           nome: string
           personalidade: string
           tom: string
@@ -27,8 +29,10 @@ export type Database = {
         }
         Insert: {
           avatar?: string
+          background?: string | null
           created_at?: string
           id?: string
+          interests?: string | null
           nome: string
           personalidade: string
           tom: string
@@ -37,8 +41,10 @@ export type Database = {
         }
         Update: {
           avatar?: string
+          background?: string | null
           created_at?: string
           id?: string
+          interests?: string | null
           nome?: string
           personalidade?: string
           tom?: string

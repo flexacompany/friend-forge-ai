@@ -1,97 +1,59 @@
-
 import { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MessageCircle, Settings, Sparkles, User, Trash2, Edit, LogOut } from 'lucide-react';
+import { Trash2, Edit2, Plus, Settings, LogOut, MessageCircle } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 interface AvatarData {
-  id: string;
+  id?: string;
   nome: string;
   personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
   tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
-  background?: string;
-  interests?: string;
+  background: string;
+  interests: string;
 }
 
-const AVATAR_OPTIONS = [
-  '👥', '🤖', '👨‍💼', '👩‍💼', '🧑‍🎓', '👨‍🏫', '👩‍🏫', '🧑‍💻',
-  '👨‍⚕️', '👩‍⚕️', '🧑‍🔬', '👨‍🎨', '👩‍🎨', '🧑‍🚀', '👨‍🌾', '👩‍🌾',
-  '🦄', '🐉', '🦊', '🐺', '🦝', '🐨', '🐼', '🦁', '🐯', '🐸', '🐙', '🦋'
-];
-
 const PERSONALITY_TYPES = [
-  {
-    id: 'friend',
-    name: 'Amigo',
-    description: 'Casual e acolhedor, sempre pronto para uma conversa amigável'
-  },
-  {
-    id: 'consultant',
-    name: 'Consultor',
-    description: 'Profissional e estratégico, oferece insights práticos'
-  },
-  {
-    id: 'colleague',
-    name: 'Colega de Trabalho',
-    description: 'Colaborativo e motivador, ideal para projetos'
-  },
-  {
-    id: 'mentor',
-    name: 'Mentor',
-    description: 'Sábio e orientador, foca no seu desenvolvimento pessoal'
-  },
-  {
-    id: 'coach',
-    name: 'Coach',
-    description: 'Motivacional e focado em resultados, te ajuda a alcançar objetivos'
-  },
-  {
-    id: 'therapist',
-    name: 'Terapeuta',
-    description: 'Compreensivo e empático, oferece suporte emocional'
-  }
+  { id: 'friend', name: 'Amigo', description: 'Casual e acolhedor, sempre pronto para uma conversa amigável.' },
+  { id: 'consultant', name: 'Consultor', description: 'Profissional e estratégico, oferece insights práticos e soluções eficazes.' },
+  { id: 'colleague', name: 'Colega de Trabalho', description: 'Colaborativo e motivador, ideal para discussões de projetos e trabalho em equipe.' },
+  { id: 'mentor', name: 'Mentor', description: 'Sábio e orientador, focado no desenvolvimento pessoal e profissional.' },
+  { id: 'coach', name: 'Coach', description: 'Motivacional focado em resultados, ajuda a alcançar objetivos e superar desafios.' },
+  { id: 'therapist', name: 'Terapeuta', description: 'Compreensivo e empático, oferece suporte emocional e ajuda na reflexão.' }
 ];
 
 const TONE_OPTIONS = [
-  { id: 'friendly', name: 'Amigável', description: 'Tom caloroso e próximo' },
-  { id: 'formal', name: 'Formal', description: 'Tom profissional e respeitoso' },
-  { id: 'playful', name: 'Divertido', description: 'Tom descontraído e alegre' },
-  { id: 'empathetic', name: 'Empático', description: 'Tom compreensivo e acolhedor' },
-  { id: 'witty', name: 'Espirituoso', description: 'Tom inteligente com humor sutil' },
-  { id: 'wise', name: 'Sábio', description: 'Tom reflexivo e profundo' }
+  { id: 'friendly', name: 'Amigável', description: 'Caloroso e próximo, usando uma linguagem acessível e acolhedora.' },
+  { id: 'formal', name: 'Formal', description: 'Profissional e respeitoso, mantendo um padrão formal mas não distante.' },
+  { id: 'playful', name: 'Divertido', description: 'Descontraído e alegre, com um toque de humor apropriado.' },
+  { id: 'empathetic', name: 'Empático', description: 'Compreensivo e acolhedor, demonstrando empatia e sensibilidade.' },
+  { id: 'witty', name: 'Espirituoso', description: 'Inteligente com humor sutil, usando referências inteligentes quando apropriado.' },
+  { id: 'wise', name: 'Sábio', description: 'Reflexivo e profundo, oferecendo perspectivas thoughtful e consideradas.' }
 ];
+
+const AVATAR_OPTIONS = ['😀', '😎', '🤓', '🧐', '🤖', '👻', '👽', '😻', '🐶', '🦊', '🐻', '🐼', '🦁', '🐯', '🐴', '🦄', '🦋', '🐞', '🐢', '🌱', '🍄', '🌟', '🌈', '🍕', '🍔', '🍦', '⚽', '🏀', '🎮', '🎨', '📚', '🎵', '📸', '🚀', '💡', '🔑', '🎁', '🎈', '🎉'];
 
 const Personalize = () => {
   const [avatares, setAvatares] = useState<AvatarData[]>([]);
-  const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const [formData, setFormData] = useState<{
-    nome: string;
-    personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
-    tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
-    avatar: string;
-    background: string;
-    interests: string;
-  }>({
+  const [formData, setFormData] = useState<AvatarData>({
     nome: '',
-    personalidade: 'friend' as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
-    tom: 'friendly' as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
-    avatar: '🤖',
+    personalidade: 'friend',
+    tom: 'friendly',
+    avatar: '😀',
     background: '',
     interests: ''
   });
+  const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
@@ -131,93 +93,41 @@ const Personalize = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
-  };
-
-  const resetForm = () => {
-    setFormData({
-      nome: '',
-      personalidade: 'friend' as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
-      tom: 'friendly' as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
-      avatar: '🤖',
-      background: '',
-      interests: ''
-    });
-    setEditingAvatar(null);
-    setIsCreating(false);
-  };
-
-  const handleSaveAvatar = async () => {
-    if (!formData.nome.trim()) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
-
+  const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
       if (editingAvatar) {
+        // Atualizar avatar existente
         const { error } = await supabase
           .from('avatares')
-          .update({
-            nome: formData.nome,
-            personalidade: formData.personalidade,
-            tom: formData.tom,
-            avatar: formData.avatar,
-            background: formData.background,
-            interests: formData.interests,
-            updated_at: new Date().toISOString()
-          })
+          .update(formData)
           .eq('id', editingAvatar.id);
 
         if (error) throw error;
         toast.success('Avatar atualizado com sucesso!');
       } else {
-        const { error } = await supabase
+        // Criar novo avatar
+        const { data, error } = await supabase
           .from('avatares')
-          .insert({
-            user_id: user.id,
-            nome: formData.nome,
-            personalidade: formData.personalidade,
-            tom: formData.tom,
-            avatar: formData.avatar,
-            background: formData.background,
-            interests: formData.interests
-          });
+          .insert([formData])
+          .select();
 
         if (error) throw error;
         toast.success('Avatar criado com sucesso!');
       }
 
-      resetForm();
       loadAvatares();
+      resetForm();
     } catch (error) {
       console.error('Erro ao salvar avatar:', error);
-      toast.error('Erro ao salvar avatar');
+      toast.error('Erro ao salvar avatar. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEditAvatar = (avatar: AvatarData) => {
-    setFormData({
-      nome: avatar.nome,
-      personalidade: avatar.personalidade,
-      tom: avatar.tom,
-      avatar: avatar.avatar,
-      background: avatar.background || '',
-      interests: avatar.interests || ''
-    });
-    setEditingAvatar(avatar);
-    setIsCreating(true);
-  };
-
-  const handleDeleteAvatar = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este avatar? O histórico de conversas também será perdido.')) {
+  const deleteAvatar = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este avatar?')) {
       return;
     }
 
@@ -232,277 +142,281 @@ const Personalize = () => {
       loadAvatares();
     } catch (error) {
       console.error('Erro ao excluir avatar:', error);
-      toast.error('Erro ao excluir avatar');
+      toast.error('Erro ao excluir avatar. Tente novamente.');
     }
   };
 
-  const selectedPersonality = PERSONALITY_TYPES.find(p => p.id === formData.personalidade);
+  const editAvatar = (avatar: AvatarData) => {
+    setEditingAvatar(avatar);
+    setFormData({ ...avatar });
+  };
+
+  const cancelEdit = () => {
+    setEditingAvatar(null);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      nome: '',
+      personalidade: 'friend',
+      tom: 'friendly',
+      avatar: '😀',
+      background: '',
+      interests: ''
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 mobile-safe-area">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-to-r from-blue-500 to-green-500 p-2 rounded-xl">
-                <MessageCircle className="h-6 w-6 text-white" />
+                <Settings className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  IAmigo - Personalização
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                  IAmigo - Avatares
                 </h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">Gerencie seus avatares</p>
+                <p className="text-sm text-gray-600">Personalize seus companheiros inteligentes</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/chat')}
-                className="btn-outline text-xs sm:text-sm"
+                className="flex items-center space-x-2"
               >
-                Chat
+                <MessageCircle className="h-4 w-4" />
+                <span>Chat</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="flex items-center space-x-1 sm:space-x-2 btn-outline text-xs sm:text-sm"
+                className="flex items-center space-x-2"
               >
-                <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Sair</span>
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          {/* Lista de Avatares */}
-          <div>
-            <Card className="card-content animate-fade-in">
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                    <h2 className="text-base sm:text-lg font-semibold text-foreground">Meus Avatares</h2>
-                  </div>
-                  <Button
-                    onClick={() => setIsCreating(true)}
-                    className="btn-primary text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
-                  >
-                    <span className="hidden sm:inline">Criar Novo</span>
-                    <span className="sm:hidden">+</span>
-                  </Button>
-                </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Formulário de Criação/Edição */}
+          <Card className="order-2 lg:order-1">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                {editingAvatar ? <Edit2 className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                <span>{editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="nome">Nome do Avatar</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="Ex: Ana, Carlos, Sofia..."
+                  className="mt-1"
+                />
+              </div>
 
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {avatares.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">Nenhum avatar criado ainda</p>
-                      <Button
-                        onClick={() => setIsCreating(true)}
-                        variant="outline"
-                        className="btn-outline"
-                      >
-                        Criar Primeiro Avatar
-                      </Button>
-                    </div>
-                  ) : (
-                    avatares.map((avatar) => (
-                      <Card key={avatar.id} className="p-3 sm:p-4 border-l-4 border-l-primary card-content">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 avatar-option">
-                              <AvatarFallback className="text-base sm:text-lg bg-card text-card-foreground">
-                                {avatar.avatar}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold text-sm sm:text-base text-foreground">{avatar.nome}</h3>
-                              <div className="flex items-center space-x-1 sm:space-x-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {PERSONALITY_TYPES.find(p => p.id === avatar.personalidade)?.name}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {TONE_OPTIONS.find(t => t.id === avatar.tom)?.name}
-                                </Badge>
-                              </div>
-                              {avatar.interests && (
-                                <p className="text-xs text-muted-foreground mt-1 truncate">
-                                  Interesses: {avatar.interests}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex space-x-1 sm:space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditAvatar(avatar)}
-                              className="btn-outline p-1 sm:p-2"
-                            >
-                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteAvatar(avatar.id)}
-                              className="btn-outline p-1 sm:p-2"
-                            >
-                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))
-                  )}
+              <div>
+                <Label>Avatar Visual</Label>
+                <div className="grid grid-cols-6 gap-2 mt-2">
+                  {AVATAR_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, avatar: option }))}
+                      className={`p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 ${
+                        formData.avatar === option 
+                          ? 'border-blue-500 bg-blue-50 shadow-md' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </Card>
-          </div>
 
-          {/* Formulário de Criação/Edição */}
-          {isCreating && (
-            <div>
-              <Card className="card-content animate-fade-in">
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center space-x-2 mb-6">
-                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                    <h2 className="text-base sm:text-lg font-semibold text-foreground">
-                      {editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}
-                    </h2>
+              <div>
+                <Label>Personalidade</Label>
+                <Select 
+                  value={formData.personalidade} 
+                  onValueChange={(value: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist') => 
+                    setFormData(prev => ({ ...prev, personalidade: value }))
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Escolha a personalidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERSONALITY_TYPES.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{type.name}</span>
+                          <span className="text-sm text-gray-500">{type.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Tom de Voz</Label>
+                <Select 
+                  value={formData.tom} 
+                  onValueChange={(value: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise') => 
+                    setFormData(prev => ({ ...prev, tom: value }))
+                  }
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Escolha o tom de voz" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TONE_OPTIONS.map((tone) => (
+                      <SelectItem key={tone.id} value={tone.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{tone.name}</span>
+                          <span className="text-sm text-gray-500">{tone.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="background">História/Background</Label>
+                <Textarea
+                  id="background"
+                  value={formData.background}
+                  onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
+                  placeholder="Conte a história do seu avatar, sua formação, experiências..."
+                  className="mt-1 min-h-[100px]"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="interests">Interesses e Especialidades</Label>
+                <Textarea
+                  id="interests"
+                  value={formData.interests}
+                  onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
+                  placeholder="Quais são os interesses, hobbies ou especialidades do avatar?"
+                  className="mt-1 min-h-[100px]"
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isLoading || !formData.nome.trim()}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+                >
+                  {isLoading ? 'Salvando...' : editingAvatar ? 'Atualizar' : 'Criar Avatar'}
+                </Button>
+                {editingAvatar && (
+                  <Button
+                    variant="outline"
+                    onClick={cancelEdit}
+                    className="px-6"
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Lista de Avatares */}
+          <Card className="order-1 lg:order-2">
+            <CardHeader>
+              <CardTitle>Meus Avatares ({avatares.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {avatares.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="bg-gradient-to-r from-blue-500 to-green-500 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <Plus className="h-10 w-10 text-white" />
                   </div>
-
-                  <div className="space-y-4 sm:space-y-6 max-h-[70vh] overflow-y-auto">
-                    {/* Nome do Avatar */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">Nome do Avatar</label>
-                      <Input
-                        value={formData.nome}
-                        onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                        placeholder="Digite um nome para seu avatar..."
-                        className="input-field"
-                      />
-                    </div>
-
-                    {/* Personalidade */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block text-foreground">Tipo de Personalidade</label>
-                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                        {PERSONALITY_TYPES.map((personality) => (
-                          <div
-                            key={personality.id}
-                            className={`personality-card ${
-                              formData.personalidade === personality.id ? 'selected' : ''
-                            }`}
-                            onClick={() => setFormData(prev => ({ 
-                              ...prev, 
-                              personalidade: personality.id as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist'
-                            }))}
-                          >
-                            <h3 className="font-medium text-foreground text-sm sm:text-base">{personality.name}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground">{personality.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Tom de Voz */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block text-foreground">Tom de Voz</label>
-                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                        {TONE_OPTIONS.map((tone) => (
-                          <div
-                            key={tone.id}
-                            className={`tone-option ${
-                              formData.tom === tone.id ? 'selected' : ''
-                            }`}
-                            onClick={() => setFormData(prev => ({ 
-                              ...prev, 
-                              tom: tone.id as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise'
-                            }))}
-                          >
-                            <div className="font-medium text-sm sm:text-base">{tone.name}</div>
-                            <div className="text-xs sm:text-sm text-muted-foreground">{tone.description}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Background/História */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">História/Background</label>
-                      <Textarea
-                        value={formData.background}
-                        onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
-                        placeholder="Descreva a história, experiência ou contexto do seu avatar..."
-                        className="input-field resize-none h-20"
-                        rows={3}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Isso ajudará o avatar a ter um contexto mais rico nas conversas
-                      </p>
-                    </div>
-
-                    {/* Interesses */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">Interesses e Especialidades</label>
-                      <Input
-                        value={formData.interests}
-                        onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
-                        placeholder="Ex: tecnologia, música, esportes, negócios..."
-                        className="input-field"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Separe os interesses por vírgulas
-                      </p>
-                    </div>
-
-                    {/* Avatar Visual */}
-                    <div>
-                      <label className="text-sm font-medium mb-3 block text-foreground">Avatar Visual</label>
-                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 max-h-32 overflow-y-auto">
-                        {AVATAR_OPTIONS.map((avatar) => (
-                          <button
-                            key={avatar}
-                            className={`avatar-option text-lg sm:text-2xl ${
-                              formData.avatar === avatar ? 'selected' : ''
-                            }`}
-                            onClick={() => setFormData(prev => ({ ...prev, avatar }))}
-                          >
-                            {avatar}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                      <Button
-                        onClick={handleSaveAvatar}
-                        disabled={isLoading}
-                        className="flex-1 btn-primary"
-                      >
-                        {isLoading ? 'Salvando...' : (editingAvatar ? 'Atualizar Avatar' : 'Salvar Avatar')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={resetForm}
-                        disabled={isLoading}
-                        className="btn-outline"
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Nenhum avatar criado</h3>
+                  <p className="text-gray-600">
+                    Crie seu primeiro avatar para começar a conversar!
+                  </p>
                 </div>
-              </Card>
-            </div>
-          )}
+              ) : (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {avatares.map((avatar) => (
+                    <div
+                      key={avatar.id}
+                      className="p-4 border rounded-lg hover:shadow-md transition-all bg-white/50"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="text-3xl">{avatar.avatar}</div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{avatar.nome}</h3>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {PERSONALITY_TYPES.find(p => p.id === avatar.personalidade)?.name}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {TONE_OPTIONS.find(t => t.id === avatar.tom)?.name}
+                              </Badge>
+                            </div>
+                            {avatar.background && (
+                              <p className="text-sm text-gray-600 mt-2 line-clamp-2">{avatar.background}</p>
+                            )}
+                            {avatar.interests && (
+                              <p className="text-sm text-blue-600 mt-1">
+                                <span className="font-medium">Interesses:</span> {avatar.interests}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2 ml-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => editAvatar(avatar)}
+                            className="p-2"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteAvatar(avatar.id!)}
+                            className="p-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

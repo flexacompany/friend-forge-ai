@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,8 @@ interface AvatarData {
   personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
   tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
-  background?: string;
-  interests?: string;
+  background: string | null;
+  interests: string | null;
 }
 
 interface Message {
@@ -99,8 +98,8 @@ const Chat = () => {
         personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
         tom: avatar.tom as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
         avatar: avatar.avatar,
-        background: avatar.background || '',
-        interests: avatar.interests || ''
+        background: avatar.background,
+        interests: avatar.interests
       }));
       
       setAvatares(typedAvatares);
