@@ -73,82 +73,84 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-white shadow-lg">
-        <div className="text-center mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-green-500 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <MessageCircle className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2">
-            IAmigo
-          </h1>
-          <p className="text-gray-600">
-            {isLogin ? 'Entre em sua conta' : 'Crie sua conta'}
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              E-mail
-            </label>
-            <Input
-              type="email"
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Senha
-            </label>
-            <Input
-              type="password"
-              placeholder="Digite sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4 mobile-safe-area">
+      <Card className="w-full max-w-md card-content animate-fade-in">
+        <div className="p-8">
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-blue-500 to-green-500 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <MessageCircle className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2">
+              IAmigo
+            </h1>
+            <p className="text-muted-foreground">
+              {isLogin ? 'Entre em sua conta' : 'Crie sua conta'}
+            </p>
           </div>
 
-          {!isLogin && (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
+              <label className="block text-sm font-medium text-foreground mb-2">
+                E-mail
+              </label>
+              <Input
+                type="email"
+                placeholder="Digite seu e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="input-field"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Senha
               </label>
               <Input
                 type="password"
-                placeholder="Confirme sua senha"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                className="input-field"
               />
             </div>
-          )}
 
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
-          >
-            {isLoading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar conta')}
-          </Button>
-        </form>
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Confirmar Senha
+                </label>
+                <Input
+                  type="password"
+                  placeholder="Confirme sua senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="input-field"
+                />
+              </div>
+            )}
 
-        <div className="text-center mt-6">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-500 hover:text-blue-600 text-sm underline"
-          >
-            {isLogin ? 'Não tem conta? Criar nova conta' : 'Já tem conta? Fazer login'}
-          </button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full btn-primary"
+            >
+              {isLoading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar conta')}
+            </Button>
+          </form>
+
+          <div className="text-center mt-6">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-primary hover:text-primary/80 text-sm underline transition-colors"
+            >
+              {isLogin ? 'Não tem conta? Criar nova conta' : 'Já tem conta? Fazer login'}
+            </button>
+          </div>
         </div>
       </Card>
     </div>

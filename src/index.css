@@ -7,28 +7,28 @@
 @layer base {
   :root {
     --background: 248 250 252;
-    --foreground: 30 41 59;
+    --foreground: 15 23 42;
 
     --card: 255 255 255;
-    --card-foreground: 30 41 59;
+    --card-foreground: 15 23 42;
 
     --popover: 255 255 255;
-    --popover-foreground: 30 41 59;
+    --popover-foreground: 15 23 42;
 
     --primary: 59 130 246;
-    --primary-foreground: 248 250 252;
+    --primary-foreground: 255 255 255;
 
     --secondary: 34 197 94;
-    --secondary-foreground: 248 250 252;
+    --secondary-foreground: 255 255 255;
 
     --muted: 241 245 249;
-    --muted-foreground: 100 116 139;
+    --muted-foreground: 71 85 105;
 
-    --accent: 167 243 208;
-    --accent-foreground: 22 78 99;
+    --accent: 147 197 253;
+    --accent-foreground: 30 58 138;
 
     --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
+    --destructive-foreground: 255 255 255;
 
     --border: 226 232 240;
     --input: 226 232 240;
@@ -40,16 +40,89 @@
     --consultant-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --colleague-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   }
+
+  .dark {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
+
+    --primary: 147 197 253;
+    --primary-foreground: 15 23 42;
+
+    --secondary: 74 222 128;
+    --secondary-foreground: 15 23 42;
+
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
+
+    --accent: 59 130 246;
+    --accent-foreground: 248 250 252;
+
+    --destructive: 248 113 113;
+    --destructive-foreground: 15 23 42;
+
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 147 197 253;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-gradient-to-br from-blue-50 via-white to-green-50 text-foreground min-h-screen;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Melhoria para mobile */
+  input, textarea, select {
+    font-size: 16px;
+    @apply text-foreground bg-background;
+  }
+
+  /* Fix para iOS Safari */
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+
+  /* Melhor contraste para links e botões */
+  a, button {
+    touch-action: manipulation;
+  }
+
+  /* Scrollbar personalizada para WebKit */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent;
   }
 }
 
@@ -59,27 +132,75 @@
   }
   
   .chat-bubble-user {
-    @apply bg-blue-500 text-white ml-auto rounded-br-md;
+    @apply bg-primary text-primary-foreground ml-auto rounded-br-md;
   }
   
   .chat-bubble-bot {
-    @apply bg-white border border-gray-200 mr-auto rounded-bl-md;
+    @apply bg-card border border-border text-card-foreground mr-auto rounded-bl-md;
   }
 
   .avatar-option {
-    @apply w-16 h-16 rounded-full border-2 border-transparent hover:border-blue-300 cursor-pointer transition-all duration-200 hover:scale-105;
+    @apply w-16 h-16 rounded-full border-2 border-transparent hover:border-primary cursor-pointer transition-all duration-200 hover:scale-105 bg-card text-card-foreground;
   }
 
   .avatar-option.selected {
-    @apply border-blue-500 ring-2 ring-blue-200;
+    @apply border-primary ring-2 ring-primary/20;
   }
 
   .personality-card {
-    @apply p-4 rounded-xl border-2 border-transparent cursor-pointer transition-all duration-200 hover:shadow-lg;
+    @apply p-4 rounded-xl border-2 border-transparent cursor-pointer transition-all duration-200 hover:shadow-lg bg-card text-card-foreground;
   }
 
   .personality-card.selected {
-    @apply border-blue-300 bg-blue-50/50;
+    @apply border-primary bg-primary/5;
+  }
+
+  .tone-option {
+    @apply p-3 border rounded-lg cursor-pointer transition-colors bg-card text-card-foreground border-border hover:border-primary/50;
+  }
+
+  .tone-option.selected {
+    @apply border-primary bg-primary/5 text-primary;
+  }
+
+  /* Melhorias para mobile */
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Botões com melhor contraste */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 border-0;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 border-0;
+  }
+
+  .btn-outline {
+    @apply bg-transparent text-foreground border border-border hover:bg-muted hover:text-foreground;
+  }
+
+  /* Inputs com melhor visibilidade */
+  .input-field {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Cards com melhor contraste */
+  .card-content {
+    @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
+  }
+
+  /* Seleção de texto melhorada */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+
+  ::-moz-selection {
+    @apply bg-primary/20 text-foreground;
   }
 }
 
@@ -104,10 +225,67 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-message-slide {
   animation: messageSlide 0.3s ease-out;
 }
 
 .animate-pulse-soft {
   animation: pulse-soft 2s infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Responsividade aprimorada */
+@media (max-width: 640px) {
+  .chat-bubble {
+    @apply max-w-[85%] text-sm;
+  }
+  
+  .avatar-option {
+    @apply w-12 h-12;
+  }
+}
+
+/* Melhor suporte para dispositivos de alto DPI */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .logo {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Melhor acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Suporte para modo escuro automático */
+@media (prefers-color-scheme: dark) {
+  .auto-dark {
+    color-scheme: dark;
+  }
+}
+
+/* Fix para focus em mobile */
+@media (max-width: 1024px) {
+  input:focus,
+  textarea:focus,
+  select:focus {
+    transform: none !important;
+  }
 }

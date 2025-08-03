@@ -61,8 +61,8 @@ const Personalize = () => {
     avatar: string;
   }>({
     nome: '',
-    personalidade: 'friend',
-    tom: 'friendly',
+    personalidade: 'friend' as 'friend' | 'consultant' | 'colleague',
+    tom: 'friendly' as 'friendly' | 'formal' | 'playful',
     avatar: '🤖'
   });
 
@@ -87,7 +87,6 @@ const Personalize = () => {
 
       if (error) throw error;
       
-      // Type assertion to ensure proper typing
       const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
         id: avatar.id,
         nome: avatar.nome,
@@ -111,8 +110,8 @@ const Personalize = () => {
   const resetForm = () => {
     setFormData({
       nome: '',
-      personalidade: 'friend',
-      tom: 'friendly',
+      personalidade: 'friend' as 'friend' | 'consultant' | 'colleague',
+      tom: 'friendly' as 'friendly' | 'formal' | 'playful',
       avatar: '🤖'
     });
     setEditingAvatar(null);
@@ -203,9 +202,9 @@ const Personalize = () => {
   const selectedPersonality = PERSONALITY_TYPES.find(p => p.id === formData.personalidade);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 mobile-safe-area">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -213,105 +212,112 @@ const Personalize = () => {
                 <MessageCircle className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                   IAmigo - Personalização
                 </h1>
-                <p className="text-sm text-gray-600">Gerencie seus avatares</p>
+                <p className="text-sm text-muted-foreground hidden sm:block">Gerencie seus avatares</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/chat')}
+                className="btn-outline text-xs sm:text-sm"
               >
-                Ir para Chat
+                Chat
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleLogout}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2 btn-outline text-xs sm:text-sm"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Sair</span>
+                <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Lista de Avatares */}
           <div>
-            <Card className="p-6 bg-white shadow-lg">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-blue-500" />
-                  <h2 className="text-lg font-semibold">Meus Avatares</h2>
-                </div>
-                <Button
-                  onClick={() => setIsCreating(true)}
-                  className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
-                >
-                  Criar Novo Avatar
-                </Button>
-              </div>
-
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {avatares.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 mb-4">Nenhum avatar criado ainda</p>
-                    <Button
-                      onClick={() => setIsCreating(true)}
-                      variant="outline"
-                    >
-                      Criar Primeiro Avatar
-                    </Button>
+            <Card className="card-content animate-fade-in">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground">Meus Avatares</h2>
                   </div>
-                ) : (
-                  avatares.map((avatar) => (
-                    <Card key={avatar.id} className="p-4 border-l-4 border-l-blue-500">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="text-lg bg-white">
-                              {avatar.avatar}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{avatar.nome}</h3>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {PERSONALITY_TYPES.find(p => p.id === avatar.personalidade)?.name}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {TONE_OPTIONS.find(t => t.id === avatar.tom)?.name}
-                              </Badge>
+                  <Button
+                    onClick={() => setIsCreating(true)}
+                    className="btn-primary text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+                  >
+                    <span className="hidden sm:inline">Criar Novo</span>
+                    <span className="sm:hidden">+</span>
+                  </Button>
+                </div>
+
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {avatares.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">Nenhum avatar criado ainda</p>
+                      <Button
+                        onClick={() => setIsCreating(true)}
+                        variant="outline"
+                        className="btn-outline"
+                      >
+                        Criar Primeiro Avatar
+                      </Button>
+                    </div>
+                  ) : (
+                    avatares.map((avatar) => (
+                      <Card key={avatar.id} className="p-3 sm:p-4 border-l-4 border-l-primary card-content">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10 sm:h-12 sm:w-12 avatar-option">
+                              <AvatarFallback className="text-base sm:text-lg bg-card text-card-foreground">
+                                {avatar.avatar}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold text-sm sm:text-base text-foreground">{avatar.nome}</h3>
+                              <div className="flex items-center space-x-1 sm:space-x-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {PERSONALITY_TYPES.find(p => p.id === avatar.personalidade)?.name}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {TONE_OPTIONS.find(t => t.id === avatar.tom)?.name}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
+                          <div className="flex space-x-1 sm:space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditAvatar(avatar)}
+                              className="btn-outline p-1 sm:p-2"
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteAvatar(avatar.id)}
+                              className="btn-outline p-1 sm:p-2"
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditAvatar(avatar)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteAvatar(avatar.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                )}
+                      </Card>
+                    ))
+                  )}
+                </div>
               </div>
             </Card>
           </div>
@@ -319,111 +325,108 @@ const Personalize = () => {
           {/* Formulário de Criação/Edição */}
           {isCreating && (
             <div>
-              <Card className="p-6 bg-white shadow-lg">
-                <div className="flex items-center space-x-2 mb-6">
-                  <Sparkles className="h-5 w-5 text-blue-500" />
-                  <h2 className="text-lg font-semibold">
-                    {editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}
-                  </h2>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Nome do Avatar */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-700">Nome do Avatar</label>
-                    <Input
-                      value={formData.nome}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                      placeholder="Digite um nome para seu avatar..."
-                      className="w-full bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                    />
+              <Card className="card-content animate-fade-in">
+                <div className="p-4 sm:p-6">
+                  <div className="flex items-center space-x-2 mb-6">
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <h2 className="text-base sm:text-lg font-semibold text-foreground">
+                      {editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}
+                    </h2>
                   </div>
 
-                  {/* Personalidade */}
-                  <div>
-                    <label className="text-sm font-medium mb-3 block text-gray-700">Tipo de Personalidade</label>
-                    <div className="space-y-3">
-                      {PERSONALITY_TYPES.map((personality) => (
-                        <div
-                          key={personality.id}
-                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                            formData.personalidade === personality.id 
-                              ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            personalidade: personality.id as 'friend' | 'consultant' | 'colleague'
-                          }))}
-                        >
-                          <h3 className="font-medium text-gray-900">{personality.name}</h3>
-                          <p className="text-sm text-gray-600">{personality.description}</p>
-                        </div>
-                      ))}
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Nome do Avatar */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-foreground">Nome do Avatar</label>
+                      <Input
+                        value={formData.nome}
+                        onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                        placeholder="Digite um nome para seu avatar..."
+                        className="input-field"
+                      />
                     </div>
-                  </div>
 
-                  {/* Tom de Voz */}
-                  <div>
-                    <label className="text-sm font-medium mb-3 block text-gray-700">Tom de Voz</label>
-                    <div className="grid grid-cols-1 gap-3">
-                      {TONE_OPTIONS.map((tone) => (
-                        <div
-                          key={tone.id}
-                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                            formData.tom === tone.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            tom: tone.id as 'friendly' | 'formal' | 'playful'
-                          }))}
-                        >
-                          <div className="font-medium text-gray-900">{tone.name}</div>
-                          <div className="text-sm text-gray-600">{tone.description}</div>
-                        </div>
-                      ))}
+                    {/* Personalidade */}
+                    <div>
+                      <label className="text-sm font-medium mb-3 block text-foreground">Tipo de Personalidade</label>
+                      <div className="space-y-3">
+                        {PERSONALITY_TYPES.map((personality) => (
+                          <div
+                            key={personality.id}
+                            className={`personality-card ${
+                              formData.personalidade === personality.id ? 'selected' : ''
+                            }`}
+                            onClick={() => setFormData(prev => ({ 
+                              ...prev, 
+                              personalidade: personality.id as 'friend' | 'consultant' | 'colleague'
+                            }))}
+                          >
+                            <h3 className="font-medium text-foreground text-sm sm:text-base">{personality.name}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground">{personality.description}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Avatar Visual */}
-                  <div>
-                    <label className="text-sm font-medium mb-3 block text-gray-700">Avatar Visual</label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {AVATAR_OPTIONS.map((avatar) => (
-                        <button
-                          key={avatar}
-                          className={`p-3 border-2 rounded-lg text-2xl flex items-center justify-center transition-colors bg-white ${
-                            formData.avatar === avatar 
-                              ? 'border-blue-500 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setFormData(prev => ({ ...prev, avatar }))}
-                        >
-                          {avatar}
-                        </button>
-                      ))}
+                    {/* Tom de Voz */}
+                    <div>
+                      <label className="text-sm font-medium mb-3 block text-foreground">Tom de Voz</label>
+                      <div className="grid grid-cols-1 gap-3">
+                        {TONE_OPTIONS.map((tone) => (
+                          <div
+                            key={tone.id}
+                            className={`tone-option ${
+                              formData.tom === tone.id ? 'selected' : ''
+                            }`}
+                            onClick={() => setFormData(prev => ({ 
+                              ...prev, 
+                              tom: tone.id as 'friendly' | 'formal' | 'playful'
+                            }))}
+                          >
+                            <div className="font-medium text-sm sm:text-base">{tone.name}</div>
+                            <div className="text-xs sm:text-sm text-muted-foreground">{tone.description}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  <Separator />
+                    {/* Avatar Visual */}
+                    <div>
+                      <label className="text-sm font-medium mb-3 block text-foreground">Avatar Visual</label>
+                      <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 sm:gap-3">
+                        {AVATAR_OPTIONS.map((avatar) => (
+                          <button
+                            key={avatar}
+                            className={`avatar-option text-lg sm:text-2xl ${
+                              formData.avatar === avatar ? 'selected' : ''
+                            }`}
+                            onClick={() => setFormData(prev => ({ ...prev, avatar }))}
+                          >
+                            {avatar}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                  <div className="flex space-x-3">
-                    <Button
-                      onClick={handleSaveAvatar}
-                      disabled={isLoading}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
-                    >
-                      {isLoading ? 'Salvando...' : (editingAvatar ? 'Atualizar Avatar' : 'Salvar Avatar')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={resetForm}
-                      disabled={isLoading}
-                    >
-                      Cancelar
-                    </Button>
+                    <Separator />
+
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                      <Button
+                        onClick={handleSaveAvatar}
+                        disabled={isLoading}
+                        className="flex-1 btn-primary"
+                      >
+                        {isLoading ? 'Salvando...' : (editingAvatar ? 'Atualizar Avatar' : 'Salvar Avatar')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={resetForm}
+                        disabled={isLoading}
+                        className="btn-outline"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
