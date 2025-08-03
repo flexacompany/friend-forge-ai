@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, avatarConfig } = await req.json();
+    const { message, avatarConfig, conversationHistory } = await req.json();
 
     // Construir o prompt do sistema baseado na configuração do avatar
     let systemPrompt = `Você é ${avatarConfig.name}, um assistente virtual com as seguintes características:
@@ -31,7 +31,32 @@ Tom de voz: ${getToneDescription(avatarConfig.tone)}`;
       systemPrompt += `\n\nSeus interesses e especialidades: ${avatarConfig.interests}`;
     }
 
-    systemPrompt += `\n\nSempre responda mantendo sua personalidade e tom de voz. Seja consistente com suas características em todas as interações. Lembre-se do contexto das conversas anteriores quando fornecido.`;
+    systemPrompt += `\n\nIMPORTANTE: Responda de forma natural e conversacional. NÃO repita ou parafraseie o que o usuário acabou de dizer. Vá direto ao ponto de sua resposta. Mantenha sua personalidade e tom de voz consistentes em todas as interações.`;
+
+    // Preparar mensagens para a API - incluir histórico da conversa
+    const messages = [
+      { 
+        role: 'system', 
+        content: systemPrompt
+      }
+    ];
+
+    // Adicionar histórico da conversa se disponível (máximo 10 mensagens para não exceder limite de tokens)
+    if (conversationHistory && conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-10);
+      for (const historyMessage of recentHistory) {
+        messages.push({
+          role: historyMessage.is_user ? 'user' : 'assistant',
+          content: historyMessage.conteudo
+        });
+      }
+    }
+
+    // Adicionar a mensagem atual
+    messages.push({ 
+      role: 'user', 
+      content: message 
+    });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -41,16 +66,7 @@ Tom de voz: ${getToneDescription(avatarConfig.tone)}`;
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: systemPrompt
-          },
-          { 
-            role: 'user', 
-            content: message 
-          }
-        ],
+        messages: messages,
         temperature: 0.7,
         max_tokens: 500,
       }),

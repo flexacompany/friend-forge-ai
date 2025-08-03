@@ -156,21 +156,6 @@ const Chat = () => {
     navigate('/auth');
   };
 
-  const buildConversationContext = (messages: Message[]): string => {
-    // Pega as últimas 10 mensagens para contexto (limitando para não exceder o limite de tokens)
-    const recentMessages = messages.slice(-10);
-    
-    if (recentMessages.length === 0) {
-      return '';
-    }
-
-    const context = recentMessages
-      .map(msg => `${msg.is_user ? 'Usuário' : 'Avatar'}: ${msg.conteudo}`)
-      .join('\n');
-
-    return `\n\nContexto da conversa anterior:\n${context}\n\nContinue a conversa considerando este contexto:`;
-  };
-
   const sendMessage = async () => {
     if (!inputMessage.trim() || !selectedAvatar || !selectedAvatarId) return;
 
@@ -207,13 +192,10 @@ const Chat = () => {
       const currentMessage = inputMessage;
       setInputMessage('');
 
-      // Construir contexto da conversa
-      const conversationContext = buildConversationContext(messages);
-
-      // Chamar API da OpenAI com contexto
+      // Chamar API da OpenAI com histórico da conversa
       const { data, error } = await supabase.functions.invoke('chat-with-openai', {
         body: {
-          message: currentMessage + conversationContext,
+          message: currentMessage,
           avatarConfig: {
             name: selectedAvatar.nome,
             personality: selectedAvatar.personalidade,
@@ -221,7 +203,8 @@ const Chat = () => {
             avatar: selectedAvatar.avatar,
             background: selectedAvatar.background || '',
             interests: selectedAvatar.interests || ''
-          }
+          },
+          conversationHistory: messages // Enviar histórico atual da conversa
         }
       });
 
