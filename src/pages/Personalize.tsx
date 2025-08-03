@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,12 @@ const Personalize = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
       if (editingAvatar) {
         // Atualizar avatar existente
         const { error } = await supabase
@@ -106,10 +113,15 @@ const Personalize = () => {
         if (error) throw error;
         toast.success('Avatar atualizado com sucesso!');
       } else {
-        // Criar novo avatar
+        // Criar novo avatar - adicionar user_id do usuário logado
+        const avatarToInsert = {
+          ...formData,
+          user_id: session.user.id
+        };
+
         const { data, error } = await supabase
           .from('avatares')
-          .insert([formData])
+          .insert([avatarToInsert])
           .select();
 
         if (error) throw error;
