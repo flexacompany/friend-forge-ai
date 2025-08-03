@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -13,14 +15,17 @@ import { useNavigate } from "react-router-dom";
 interface AvatarData {
   id: string;
   nome: string;
-  personalidade: 'friend' | 'consultant' | 'colleague';
-  tom: 'friendly' | 'formal' | 'playful';
+  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
+  tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
+  background?: string;
+  interests?: string;
 }
 
 const AVATAR_OPTIONS = [
   '👥', '🤖', '👨‍💼', '👩‍💼', '🧑‍🎓', '👨‍🏫', '👩‍🏫', '🧑‍💻',
-  '👨‍⚕️', '👩‍⚕️', '🧑‍🔬', '👨‍🎨', '👩‍🎨', '🧑‍🚀', '👨‍🌾', '👩‍🌾'
+  '👨‍⚕️', '👩‍⚕️', '🧑‍🔬', '👨‍🎨', '👩‍🎨', '🧑‍🚀', '👨‍🌾', '👩‍🌾',
+  '🦄', '🐉', '🦊', '🐺', '🦝', '🐨', '🐼', '🦁', '🐯', '🐸', '🐙', '🦋'
 ];
 
 const PERSONALITY_TYPES = [
@@ -38,13 +43,31 @@ const PERSONALITY_TYPES = [
     id: 'colleague',
     name: 'Colega de Trabalho',
     description: 'Colaborativo e motivador, ideal para projetos'
+  },
+  {
+    id: 'mentor',
+    name: 'Mentor',
+    description: 'Sábio e orientador, foca no seu desenvolvimento pessoal'
+  },
+  {
+    id: 'coach',
+    name: 'Coach',
+    description: 'Motivacional e focado em resultados, te ajuda a alcançar objetivos'
+  },
+  {
+    id: 'therapist',
+    name: 'Terapeuta',
+    description: 'Compreensivo e empático, oferece suporte emocional'
   }
 ];
 
 const TONE_OPTIONS = [
   { id: 'friendly', name: 'Amigável', description: 'Tom caloroso e próximo' },
   { id: 'formal', name: 'Formal', description: 'Tom profissional e respeitoso' },
-  { id: 'playful', name: 'Divertido', description: 'Tom descontraído e alegre' }
+  { id: 'playful', name: 'Divertido', description: 'Tom descontraído e alegre' },
+  { id: 'empathetic', name: 'Empático', description: 'Tom compreensivo e acolhedor' },
+  { id: 'witty', name: 'Espirituoso', description: 'Tom inteligente com humor sutil' },
+  { id: 'wise', name: 'Sábio', description: 'Tom reflexivo e profundo' }
 ];
 
 const Personalize = () => {
@@ -56,14 +79,18 @@ const Personalize = () => {
 
   const [formData, setFormData] = useState<{
     nome: string;
-    personalidade: 'friend' | 'consultant' | 'colleague';
-    tom: 'friendly' | 'formal' | 'playful';
+    personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
+    tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
     avatar: string;
+    background: string;
+    interests: string;
   }>({
     nome: '',
-    personalidade: 'friend' as 'friend' | 'consultant' | 'colleague',
-    tom: 'friendly' as 'friendly' | 'formal' | 'playful',
-    avatar: '🤖'
+    personalidade: 'friend' as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
+    tom: 'friendly' as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
+    avatar: '🤖',
+    background: '',
+    interests: ''
   });
 
   useEffect(() => {
@@ -90,9 +117,11 @@ const Personalize = () => {
       const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
         id: avatar.id,
         nome: avatar.nome,
-        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague',
-        tom: avatar.tom as 'friendly' | 'formal' | 'playful',
-        avatar: avatar.avatar
+        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
+        tom: avatar.tom as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
+        avatar: avatar.avatar,
+        background: avatar.background || '',
+        interests: avatar.interests || ''
       }));
       
       setAvatares(typedAvatares);
@@ -110,9 +139,11 @@ const Personalize = () => {
   const resetForm = () => {
     setFormData({
       nome: '',
-      personalidade: 'friend' as 'friend' | 'consultant' | 'colleague',
-      tom: 'friendly' as 'friendly' | 'formal' | 'playful',
-      avatar: '🤖'
+      personalidade: 'friend' as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
+      tom: 'friendly' as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
+      avatar: '🤖',
+      background: '',
+      interests: ''
     });
     setEditingAvatar(null);
     setIsCreating(false);
@@ -137,6 +168,8 @@ const Personalize = () => {
             personalidade: formData.personalidade,
             tom: formData.tom,
             avatar: formData.avatar,
+            background: formData.background,
+            interests: formData.interests,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingAvatar.id);
@@ -151,7 +184,9 @@ const Personalize = () => {
             nome: formData.nome,
             personalidade: formData.personalidade,
             tom: formData.tom,
-            avatar: formData.avatar
+            avatar: formData.avatar,
+            background: formData.background,
+            interests: formData.interests
           });
 
         if (error) throw error;
@@ -173,7 +208,9 @@ const Personalize = () => {
       nome: avatar.nome,
       personalidade: avatar.personalidade,
       tom: avatar.tom,
-      avatar: avatar.avatar
+      avatar: avatar.avatar,
+      background: avatar.background || '',
+      interests: avatar.interests || ''
     });
     setEditingAvatar(avatar);
     setIsCreating(true);
@@ -293,6 +330,11 @@ const Personalize = () => {
                                   {TONE_OPTIONS.find(t => t.id === avatar.tom)?.name}
                                 </Badge>
                               </div>
+                              {avatar.interests && (
+                                <p className="text-xs text-muted-foreground mt-1 truncate">
+                                  Interesses: {avatar.interests}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex space-x-1 sm:space-x-2">
@@ -334,7 +376,7 @@ const Personalize = () => {
                     </h2>
                   </div>
 
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-6 max-h-[70vh] overflow-y-auto">
                     {/* Nome do Avatar */}
                     <div>
                       <label className="text-sm font-medium mb-2 block text-foreground">Nome do Avatar</label>
@@ -349,7 +391,7 @@ const Personalize = () => {
                     {/* Personalidade */}
                     <div>
                       <label className="text-sm font-medium mb-3 block text-foreground">Tipo de Personalidade</label>
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
                         {PERSONALITY_TYPES.map((personality) => (
                           <div
                             key={personality.id}
@@ -358,7 +400,7 @@ const Personalize = () => {
                             }`}
                             onClick={() => setFormData(prev => ({ 
                               ...prev, 
-                              personalidade: personality.id as 'friend' | 'consultant' | 'colleague'
+                              personalidade: personality.id as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist'
                             }))}
                           >
                             <h3 className="font-medium text-foreground text-sm sm:text-base">{personality.name}</h3>
@@ -371,7 +413,7 @@ const Personalize = () => {
                     {/* Tom de Voz */}
                     <div>
                       <label className="text-sm font-medium mb-3 block text-foreground">Tom de Voz</label>
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
                         {TONE_OPTIONS.map((tone) => (
                           <div
                             key={tone.id}
@@ -380,7 +422,7 @@ const Personalize = () => {
                             }`}
                             onClick={() => setFormData(prev => ({ 
                               ...prev, 
-                              tom: tone.id as 'friendly' | 'formal' | 'playful'
+                              tom: tone.id as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise'
                             }))}
                           >
                             <div className="font-medium text-sm sm:text-base">{tone.name}</div>
@@ -390,10 +432,39 @@ const Personalize = () => {
                       </div>
                     </div>
 
+                    {/* Background/História */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-foreground">História/Background</label>
+                      <Textarea
+                        value={formData.background}
+                        onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
+                        placeholder="Descreva a história, experiência ou contexto do seu avatar..."
+                        className="input-field resize-none h-20"
+                        rows={3}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Isso ajudará o avatar a ter um contexto mais rico nas conversas
+                      </p>
+                    </div>
+
+                    {/* Interesses */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-foreground">Interesses e Especialidades</label>
+                      <Input
+                        value={formData.interests}
+                        onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
+                        placeholder="Ex: tecnologia, música, esportes, negócios..."
+                        className="input-field"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Separe os interesses por vírgulas
+                      </p>
+                    </div>
+
                     {/* Avatar Visual */}
                     <div>
                       <label className="text-sm font-medium mb-3 block text-foreground">Avatar Visual</label>
-                      <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 max-h-32 overflow-y-auto">
                         {AVATAR_OPTIONS.map((avatar) => (
                           <button
                             key={avatar}

@@ -14,9 +14,11 @@ import { useNavigate } from "react-router-dom";
 interface AvatarData {
   id: string;
   nome: string;
-  personalidade: 'friend' | 'consultant' | 'colleague';
-  tom: 'friendly' | 'formal' | 'playful';
+  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
+  tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
+  background?: string;
+  interests?: string;
 }
 
 interface Message {
@@ -29,13 +31,19 @@ interface Message {
 const PERSONALITY_TYPES = [
   { id: 'friend', name: 'Amigo' },
   { id: 'consultant', name: 'Consultor' },
-  { id: 'colleague', name: 'Colega de Trabalho' }
+  { id: 'colleague', name: 'Colega de Trabalho' },
+  { id: 'mentor', name: 'Mentor' },
+  { id: 'coach', name: 'Coach' },
+  { id: 'therapist', name: 'Terapeuta' }
 ];
 
 const TONE_OPTIONS = [
   { id: 'friendly', name: 'Amigável' },
   { id: 'formal', name: 'Formal' },
-  { id: 'playful', name: 'Divertido' }
+  { id: 'playful', name: 'Divertido' },
+  { id: 'empathetic', name: 'Empático' },
+  { id: 'witty', name: 'Espirituoso' },
+  { id: 'wise', name: 'Sábio' }
 ];
 
 const Chat = () => {
@@ -85,13 +93,14 @@ const Chat = () => {
 
       if (error) throw error;
       
-      // Type assertion to ensure proper typing
       const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
         id: avatar.id,
         nome: avatar.nome,
-        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague',
-        tom: avatar.tom as 'friendly' | 'formal' | 'playful',
-        avatar: avatar.avatar
+        personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
+        tom: avatar.tom as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
+        avatar: avatar.avatar,
+        background: avatar.background || '',
+        interests: avatar.interests || ''
       }));
       
       setAvatares(typedAvatares);
@@ -148,6 +157,21 @@ const Chat = () => {
     navigate('/auth');
   };
 
+  const buildConversationContext = (messages: Message[]): string => {
+    // Pega as últimas 10 mensagens para contexto (limitando para não exceder o limite de tokens)
+    const recentMessages = messages.slice(-10);
+    
+    if (recentMessages.length === 0) {
+      return '';
+    }
+
+    const context = recentMessages
+      .map(msg => `${msg.is_user ? 'Usuário' : 'Avatar'}: ${msg.conteudo}`)
+      .join('\n');
+
+    return `\n\nContexto da conversa anterior:\n${context}\n\nContinue a conversa considerando este contexto:`;
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || !selectedAvatar || !selectedAvatarId) return;
 
@@ -184,15 +208,20 @@ const Chat = () => {
       const currentMessage = inputMessage;
       setInputMessage('');
 
-      // Chamar API da OpenAI
+      // Construir contexto da conversa
+      const conversationContext = buildConversationContext(messages);
+
+      // Chamar API da OpenAI com contexto
       const { data, error } = await supabase.functions.invoke('chat-with-openai', {
         body: {
-          message: currentMessage,
+          message: currentMessage + conversationContext,
           avatarConfig: {
             name: selectedAvatar.nome,
             personality: selectedAvatar.personalidade,
             tone: selectedAvatar.tom,
-            avatar: selectedAvatar.avatar
+            avatar: selectedAvatar.avatar,
+            background: selectedAvatar.background || '',
+            interests: selectedAvatar.interests || ''
           }
         }
       });
@@ -346,6 +375,11 @@ const Chat = () => {
                     <Badge variant="outline" className="text-xs">
                       {selectedTone?.name}
                     </Badge>
+                    {messages.length > 0 && (
+                      <Badge variant="outline" className="text-xs bg-green-50">
+                        {messages.length} mensagens
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -362,6 +396,9 @@ const Chat = () => {
                 <h3 className="text-lg font-semibold mb-2">Olá! 👋</h3>
                 <p className="text-gray-600 max-w-md mx-auto">
                   Sou o <strong>{selectedAvatar.nome}</strong>, seu {selectedPersonality?.name.toLowerCase()}! 
+                  {selectedAvatar.interests && (
+                    <span> Meus interesses incluem: {selectedAvatar.interests}.</span>
+                  )}
                   Como posso te ajudar hoje?
                 </p>
               </div>
