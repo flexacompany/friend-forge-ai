@@ -14,7 +14,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Verificar novas mensagens de avatares (não do usuário)
+  // Verificar novas mensagens de reengajamento (após inatividade de 24h)
   const checkForNewMessages = async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -24,8 +24,28 @@ export const useNotifications = () => {
         return;
       }
 
-      // Buscar mensagens dos últimos 5 minutos que não são do usuário
+      // Buscar apenas mensagens de reengajamento dos últimos 5 minutos
+      // Estas são mensagens que foram enviadas após o usuário ficar inativo por 24h
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      // Primeiro, buscar conversas que tiveram notificação enviada
+      const { data: notifiedConversations, error: activityError } = await supabase
+        .from('conversation_activity')
+        .select('user_id, avatar_id')
+        .eq('user_id', user.id)
+        .eq('notification_sent', true);
+
+      if (activityError) {
+        console.error('Erro ao buscar atividades:', activityError);
+        return;
+      }
+
+      if (!notifiedConversations || notifiedConversations.length === 0) {
+        return;
+      }
+
+      // Buscar mensagens recentes dos avatares que enviaram notificações
+      const avatarIds = notifiedConversations.map(conv => conv.avatar_id);
       
       const { data: recentMessages, error } = await supabase
         .from('mensagens')
@@ -38,6 +58,7 @@ export const useNotifications = () => {
         `)
         .eq('user_id', user.id)
         .eq('is_user', false)
+        .in('avatar_id', avatarIds)
         .gte('created_at', fiveMinutesAgo)
         .order('created_at', { ascending: false });
 
@@ -50,7 +71,7 @@ export const useNotifications = () => {
         const formattedNotifications = recentMessages.map(msg => ({
           id: msg.id,
           avatar_id: msg.avatar_id,
-          avatar_nome: (msg.avatares as any)?.nome || 'Avatar',
+          avatar_nome: (msg.avatares as { nome: string })?.nome || 'Avatar',
           conteudo: msg.conteudo,
           created_at: msg.created_at
         }));
@@ -85,6 +106,11 @@ export const useNotifications = () => {
 
   // Limpar todas as notificações
   const clearAll = () => {
+    setNotifications([]);
+  };
+
+  // Marcar todas as notificações como visualizadas (zerar contador)
+  const markAllAsViewed = () => {
     setNotifications([]);
   };
 
@@ -148,9 +174,27 @@ export const useNotifications = () => {
               filter: `user_id=eq.${user.id}`,
             },
             (payload) => {
-              // Se a mensagem não é do usuário, verificar se é uma notificação
+              // Só processar se for uma mensagem de avatar E se for uma mensagem de reengajamento
+              // Verificamos isso consultando se a notification foi marcada como enviada
               if (!payload.new.is_user) {
-                setTimeout(checkForNewMessages, 1000); // Aguardar um pouco para garantir que os dados estejam disponíveis
+                // Aguardar um pouco e verificar se é uma mensagem de reengajamento
+                setTimeout(async () => {
+                  try {
+                    const { data: activityData } = await supabase
+                      .from('conversation_activity')
+                      .select('notification_sent')
+                      .eq('user_id', payload.new.user_id)
+                      .eq('avatar_id', payload.new.avatar_id)
+                      .single();
+                    
+                    // Só mostrar notificação se for uma mensagem de reengajamento
+                    if (activityData?.notification_sent) {
+                      checkForNewMessages();
+                    }
+                  } catch (error) {
+                    console.log('Erro ao verificar se é mensagem de reengajamento:', error);
+                  }
+                }, 1000);
               }
             }
           )
@@ -162,7 +206,7 @@ export const useNotifications = () => {
       }
     };
 
-    let channel: any;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
     setupRealtimeListener().then((ch) => {
       channel = ch;
     });
@@ -180,6 +224,7 @@ export const useNotifications = () => {
     checkForNewMessages,
     markAsRead,
     clearAll,
+    markAllAsViewed,
     triggerNotificationCheck
   };
 };

@@ -64,9 +64,10 @@ const Auth = () => {
 
         toast.success('Conta criada com sucesso! Verifique seu e-mail.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro na autenticação:', error);
-      toast.error(error.message || 'Erro ao processar solicitação');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

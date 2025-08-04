@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -370,20 +370,14 @@ const Personalize = () => {
   const [avatarType, setAvatarType] = useState<'emoji' | 'image'>('emoji');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-    loadAvatares();
-    loadSystemAvatars();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
     }
-  };
+  }, [navigate]);
 
-  const loadAvatares = async () => {
+  const loadAvatares = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -412,9 +406,9 @@ const Personalize = () => {
       console.error('Erro ao carregar avatares:', error);
       toast.error('Erro ao carregar avatares.');
     }
-  };
+  }, []);
 
-  const loadSystemAvatars = async () => {
+  const loadSystemAvatars = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('system_avatars')
@@ -428,7 +422,13 @@ const Personalize = () => {
       // Se não conseguir carregar do banco, usa os avatares locais
       setSystemAvatars(SYSTEM_AVATARS);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    loadAvatares();
+    loadSystemAvatars();
+  }, [checkAuth, loadAvatares, loadSystemAvatars]);
 
   const addSystemAvatar = async (systemAvatar: SystemAvatarData) => {
     try {
@@ -817,9 +817,9 @@ const Personalize = () => {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md">
                     {PERSONALITY_TYPES.map((type) => (
-                      <SelectItem key={type.id} value={type.id} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
+                      <SelectItem key={type.value} value={type.value} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
                         <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-sm truncate">{type.name}</span>
+                          <span className="font-semibold text-slate-100 text-sm truncate">{type.label}</span>
                           <span className="text-xs text-slate-300 leading-tight line-clamp-2">{type.description}</span>
                         </div>
                       </SelectItem>
@@ -841,9 +841,9 @@ const Personalize = () => {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md">
                     {TONE_OPTIONS.map((tone) => (
-                      <SelectItem key={tone.id} value={tone.id} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
+                      <SelectItem key={tone.value} value={tone.value} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
                         <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-sm truncate">{tone.name}</span>
+                          <span className="font-semibold text-slate-100 text-sm truncate">{tone.label}</span>
                           <span className="text-xs text-slate-300 leading-tight line-clamp-2">{tone.description}</span>
                         </div>
                       </SelectItem>
@@ -925,14 +925,14 @@ const Personalize = () => {
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700">
-                    <SelectItem value="all" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Todas as Categorias</SelectItem>
-                    <SelectItem value="musica" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Música</SelectItem>
-                    <SelectItem value="entretenimento" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Entretenimento</SelectItem>
-                    <SelectItem value="esportes" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Esportes</SelectItem>
-                    <SelectItem value="profissional" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Profissional</SelectItem>
-                    <SelectItem value="tecnologia" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Tecnologia</SelectItem>
-                    <SelectItem value="arte" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Arte</SelectItem>
-                    <SelectItem value="outros" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Outros</SelectItem>
+                    <SelectItem key="all" value="all" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Todas as Categorias</SelectItem>
+                    <SelectItem key="musica" value="musica" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Música</SelectItem>
+                    <SelectItem key="entretenimento" value="entretenimento" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Entretenimento</SelectItem>
+                    <SelectItem key="esportes" value="esportes" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Esportes</SelectItem>
+                    <SelectItem key="profissional" value="profissional" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Profissional</SelectItem>
+                    <SelectItem key="tecnologia" value="tecnologia" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Tecnologia</SelectItem>
+                    <SelectItem key="arte" value="arte" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Arte</SelectItem>
+                    <SelectItem key="outros" value="outros" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,7 +58,7 @@ const Chat = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { notifications } = useNotifications();
+  const { notifications, markAllAsViewed } = useNotifications();
 
   const renderAvatar = (avatar: AvatarData) => {
     if (avatar.avatarType === 'image') {
@@ -86,10 +86,33 @@ const Chat = () => {
     return <span>{avatar.avatar}</span>;
   };
 
+  const checkAuth = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate('/auth');
+    }
+  }, [navigate]);
+
+  const loadMessages = useCallback(async (avatarId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('mensagens')
+        .select('*')
+        .eq('avatar_id', avatarId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
+      toast.error('Erro ao carregar mensagens.');
+    }
+  }, []);
+
   useEffect(() => {
     checkAuth();
     loadAvatares();
-  }, []);
+  }, [checkAuth]);
 
   useEffect(() => {
     if (selectedAvatarId) {
@@ -97,18 +120,11 @@ const Chat = () => {
       setSelectedAvatar(avatar || null);
       loadMessages(selectedAvatarId);
     }
-  }, [selectedAvatarId, avatares]);
+  }, [selectedAvatarId, avatares, loadMessages]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/auth');
-    }
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,22 +158,6 @@ const Chat = () => {
     } catch (error) {
       console.error('Erro ao carregar avatares:', error);
       toast.error('Erro ao carregar avatares');
-    }
-  };
-
-  const loadMessages = async (avatarId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('mensagens')
-        .select('*')
-        .eq('avatar_id', avatarId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar mensagens:', error);
-      toast.error('Erro ao carregar histórico de conversa');
     }
   };
 
@@ -318,7 +318,10 @@ const Chat = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Button
-                onClick={() => setShowNotifications(true)}
+                onClick={() => {
+                  setShowNotifications(true);
+                  markAllAsViewed(); // Zerar contador quando abrir notificações
+                }}
                 className="relative bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2"
               >
                 <Bell className="h-4 w-4" />

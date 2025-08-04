@@ -218,7 +218,7 @@ const Index = () => {
                           <div
                             key={personality.id}
                             className={`personality-card ${avatarConfig.personality === personality.id ? 'selected' : ''} ${personality.bgColor}`}
-                            onClick={() => setAvatarConfig(prev => ({ ...prev, personality: personality.id as any }))}
+                            onClick={() => setAvatarConfig(prev => ({ ...prev, personality: personality.id as 'friend' | 'consultant' | 'colleague' }))}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
@@ -247,7 +247,7 @@ const Index = () => {
                           key={tone.id}
                           variant={avatarConfig.tone === tone.id ? "default" : "outline"}
                           size="sm"
-                          onClick={() => setAvatarConfig(prev => ({ ...prev, tone: tone.id as any }))}
+                          onClick={() => setAvatarConfig(prev => ({ ...prev, tone: tone.id as 'friendly' | 'formal' | 'playful' }))}
                           className="justify-start text-left"
                         >
                           <div>

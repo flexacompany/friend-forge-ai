@@ -69,16 +69,18 @@ serve(async (req) => {
         console.log(`💬 Processando conversa: ${conversation.avatar_nome} (${conversation.avatar_id})`);
 
         // Buscar template de mensagem apropriado
-        let { data: messageTemplates, error: templateError } = await supabaseClient
+        const { data: messageTemplates, error: templateError } = await supabaseClient
           .from('reengagement_messages')
           .select('message_template')
           .eq('personalidade', conversation.personalidade)
           .eq('tom', conversation.tom)
           .eq('categoria', conversation.categoria)
           .limit(1)
+        
+        let finalMessageTemplates = messageTemplates
 
         // Se não encontrar template específico da categoria, buscar template geral
-        if (!messageTemplates || messageTemplates.length === 0) {
+        if (!finalMessageTemplates || finalMessageTemplates.length === 0) {
           const { data: generalTemplates, error: generalError } = await supabaseClient
             .from('reengagement_messages')
             .select('message_template')
@@ -92,7 +94,7 @@ serve(async (req) => {
             throw generalError
           }
 
-          messageTemplates = generalTemplates
+          finalMessageTemplates = generalTemplates
         }
 
         if (templateError) {
@@ -100,14 +102,14 @@ serve(async (req) => {
           throw templateError
         }
 
-        if (!messageTemplates || messageTemplates.length === 0) {
+        if (!finalMessageTemplates || finalMessageTemplates.length === 0) {
           // Template padrão como fallback
-          messageTemplates = [{
+          finalMessageTemplates = [{
             message_template: 'Oi! Senti sua falta por aqui! Como você está? 😊'
           }]
         }
 
-        const messageTemplate = messageTemplates[0] as ReengagementMessage;
+        const messageTemplate = finalMessageTemplates[0] as ReengagementMessage;
         const messageContent = messageTemplate.message_template;
 
         console.log(`📝 Enviando mensagem: "${messageContent.substring(0, 50)}..."`);
