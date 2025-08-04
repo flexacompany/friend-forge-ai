@@ -73,24 +73,24 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4 mobile-safe-area">
-      <Card className="w-full max-w-md card-content animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 mobile-safe-area">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm animate-fade-in">
         <div className="p-8">
           <div className="text-center mb-8">
-            <div className="bg-gradient-to-r from-blue-500 to-green-500 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <MessageCircle className="h-8 w-8 text-white" />
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-2xl w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-lg">
+              <MessageCircle className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
               IAmigo
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-slate-600 text-lg font-medium">
               {isLogin ? 'Entre em sua conta' : 'Crie sua conta'}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
                 E-mail
               </label>
               <Input
@@ -99,12 +99,12 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="input-field"
+                className="h-12 text-base border-2 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl bg-white text-slate-900 placeholder:text-slate-400"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-3">
                 Senha
               </label>
               <Input
@@ -113,13 +113,13 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="input-field"
+                className="h-12 text-base border-2 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl bg-white text-slate-900 placeholder:text-slate-400"
               />
             </div>
 
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
                   Confirmar Senha
                 </label>
                 <Input
@@ -128,7 +128,7 @@ const Auth = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="input-field"
+                  className="h-12 text-base border-2 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl bg-white text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             )}
@@ -136,17 +136,17 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
             >
               {isLoading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Criar conta')}
             </Button>
           </form>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:text-primary/80 text-sm underline transition-colors"
+              className="text-emerald-600 hover:text-emerald-700 text-base font-medium underline decoration-2 underline-offset-4 transition-colors duration-200"
             >
               {isLogin ? 'Não tem conta? Criar nova conta' : 'Já tem conta? Fazer login'}
             </button>

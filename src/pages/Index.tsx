@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MessageCircle, Settings, Send, Heart, Briefcase, Users, Sparkles } from 'lucide-react';
+import { MessageCircle, Settings, Send, Heart, Briefcase, Users, Sparkles, Check } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -220,12 +220,17 @@ const Index = () => {
                             className={`personality-card ${avatarConfig.personality === personality.id ? 'selected' : ''} ${personality.bgColor}`}
                             onClick={() => setAvatarConfig(prev => ({ ...prev, personality: personality.id as any }))}
                           >
-                            <div className="flex items-center space-x-3">
-                              <Icon className={`h-5 w-5 ${personality.color}`} />
-                              <div>
-                                <h3 className="font-medium">{personality.name}</h3>
-                                <p className="text-sm text-gray-600">{personality.description}</p>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <Icon className={`h-5 w-5 ${personality.color}`} />
+                                <div>
+                                  <h3 className="font-medium">{personality.name}</h3>
+                                  <p className="text-sm text-gray-600">{personality.description}</p>
+                                </div>
                               </div>
+                              {avatarConfig.personality === personality.id && (
+                                <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
+                              )}
                             </div>
                           </div>
                         );

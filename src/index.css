@@ -97,6 +97,29 @@
     @apply text-foreground bg-background;
   }
 
+  /* Chat bubble styles */
+  .chat-bubble {
+    max-width: 85%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  @media (max-width: 768px) {
+    .chat-bubble {
+      max-width: 95%;
+    }
+  }
+
+  /* Avatar option styles */
+  .avatar-option {
+    transition: all 0.2s ease;
+  }
+
+  .avatar-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
   /* Fix para iOS Safari */
   input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
@@ -194,13 +217,15 @@
     @apply bg-card text-card-foreground border border-border rounded-lg shadow-sm;
   }
 
-  /* Seleção de texto melhorada */
+  /* Seleção de texto melhorada com gradiente emerald-teal */
   ::selection {
-    @apply bg-primary/20 text-foreground;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(13, 148, 136, 0.2));
+    color: rgb(15, 23, 42);
   }
 
   ::-moz-selection {
-    @apply bg-primary/20 text-foreground;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(13, 148, 136, 0.2));
+    color: rgb(15, 23, 42);
   }
 }
 
@@ -257,6 +282,76 @@
   }
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+    margin: 0;
+    max-width: 100%;
+  }
+  
+  .personality-card {
+    padding: 0.75rem;
+    margin: 0.25rem;
+  }
+  
+  .tone-option {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Fix text overlapping issues */
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Ensure proper spacing for mobile */
+  .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  .space-y-2 > * + * {
+    margin-top: 0.375rem;
+  }
+  
+  /* Fix button and input sizing */
+  button {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+  }
+  
+  input, textarea {
+    min-height: 44px;
+    padding: 0.75rem;
+  }
+  
+  /* Fix card layouts */
+  .card {
+    margin: 0.25rem;
+    border-radius: 0.5rem;
+  }
+  
+  /* Fix avatar grid */
+  .grid {
+    gap: 0.5rem;
+  }
+  
+  /* Fix select components */
+  .select-trigger {
+    min-height: 44px;
+  }
+}
+
 /* Melhor suporte para dispositivos de alto DPI */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .logo {
@@ -288,4 +383,53 @@
   select:focus {
     transform: none !important;
   }
+}
+
+/* Fix para z-index dos dropdowns Select */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+}
+
+/* Garantir que os portals do Radix tenham z-index alto */
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
+
+/* Fix para overflow dos SelectItem */
+[data-radix-select-item] {
+  overflow: hidden !important;
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  max-width: 100% !important;
+}
+
+/* Garantir que o conteúdo dos SelectItem não vaze */
+[data-radix-select-item] > * {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Fix específico para as descrições longas */
+[data-radix-select-item] .flex.flex-col {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+[data-radix-select-item] .flex.flex-col span {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Utility para line-clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal !important;
 }
