@@ -433,3 +433,17 @@
   overflow: hidden;
   white-space: normal !important;
 }
+
+/* Animação suave para emojis rolando */
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-up {
+  animation: scroll-up 20s linear infinite;
+}

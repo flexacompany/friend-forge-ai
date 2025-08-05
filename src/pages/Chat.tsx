@@ -5,7 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Send, Settings, LogOut, Trash2, Bell } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MessageCircle, Send, Settings, LogOut, Trash2, Bell, User, ChevronDown } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -56,8 +57,9 @@ const Chat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userEmail, setUserEmail] = useState<string>('');
   const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { notifications, markAllAsViewed } = useNotifications();
 
   const renderAvatar = (avatar: AvatarData) => {
@@ -90,6 +92,8 @@ const Chat = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
+    } else {
+      setUserEmail(session.user.email || '');
     }
   }, [navigate]);
 
@@ -341,13 +345,40 @@ const Chat = () => {
                 <Settings className="h-4 w-4" />
                 <span>Avatares</span>
               </Button>
-              <Button
-                onClick={handleLogout}
-                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sair</span>
-              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>Conta</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-slate-700">
+                  <DropdownMenuLabel className="text-slate-200">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">Minha Conta</p>
+                      <p className="text-xs text-slate-400 truncate">{userEmail}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-slate-700" />
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/settings')}
+                    className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações da Conta
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-700" />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-red-400 hover:bg-slate-700 focus:bg-slate-700 cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

@@ -11,6 +11,9 @@ import Auth from "./pages/Auth";
 import Personalize from "./pages/Personalize";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import UserSettings from "./pages/UserSettings";
 
 const queryClient = new QueryClient();
 
@@ -63,12 +66,24 @@ const App = () => {
               element={!session ? <Auth /> : <Navigate to="/chat" replace />} 
             />
             <Route 
+              path="/forgot-password" 
+              element={!session ? <ForgotPassword /> : <Navigate to="/chat" replace />} 
+            />
+            <Route 
+              path="/reset-password" 
+              element={<ResetPassword />} 
+            />
+            <Route 
               path="/personalize" 
               element={session ? <Personalize /> : <Navigate to="/auth" replace />} 
             />
             <Route 
               path="/chat" 
               element={session ? <Chat /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/settings" 
+              element={session ? <UserSettings /> : <Navigate to="/auth" replace />} 
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
