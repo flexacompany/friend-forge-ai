@@ -63,29 +63,31 @@ const Chat = () => {
   const { notifications, markAllAsViewed } = useNotifications();
 
   const renderAvatar = (avatar: AvatarData) => {
-    if (avatar.avatarType === 'image') {
-      return (
-        <img 
-          src={avatar.avatar} 
-          alt={avatar.nome}
-          className="w-6 h-6 rounded-full object-cover"
-        />
-      );
-    }
-    return <span className="text-lg">{avatar.avatar}</span>;
+    return (
+      <Avatar className="h-6 w-6 flex-shrink-0">
+        {avatar.avatarType === 'image' ? (
+          <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
+        ) : (
+          <AvatarFallback className="text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+            {avatar.avatar}
+          </AvatarFallback>
+        )}
+      </Avatar>
+    );
   };
 
   const renderAvatarInSelect = (avatar: AvatarData) => {
-    if (avatar.avatarType === 'image') {
-      return (
-        <img 
-          src={avatar.avatar} 
-          alt={avatar.nome}
-          className="w-5 h-5 rounded-full object-cover"
-        />
-      );
-    }
-    return <span>{avatar.avatar}</span>;
+    return (
+      <Avatar className="h-5 w-5 flex-shrink-0">
+        {avatar.avatarType === 'image' ? (
+          <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
+        ) : (
+          <AvatarFallback className="text-xs bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+            {avatar.avatar}
+          </AvatarFallback>
+        )}
+      </Avatar>
+    );
   };
 
   const checkAuth = useCallback(async () => {
@@ -304,32 +306,33 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container-safe">
       {/* Header */}
-      <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
+      <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg">
-                <MessageCircle className="h-6 w-6 text-white" />
+                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  IAmigo - Chat
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent truncate">
+                  <span className="sm:hidden">IAmigo</span>
+                  <span className="hidden sm:inline">IAmigo - Chat</span>
                 </h1>
-                <p className="text-sm text-slate-300">Converse com seu companheiro inteligente</p>
+                <p className="text-xs sm:text-sm text-slate-300 hidden sm:block">Converse com seu companheiro inteligente</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 button-container-safe">
               <Button
                 onClick={() => {
                   setShowNotifications(true);
                   markAllAsViewed(); // Zerar contador quando abrir notificações
                 }}
-                className="relative bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                className="relative bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-2 sm:px-4"
               >
                 <Bell className="h-4 w-4" />
-                <span>Notificações</span>
+                <span className="hidden sm:inline">Notificações</span>
                 {notifications.length > 0 && (
                   <Badge 
                     className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center p-0"
@@ -340,17 +343,17 @@ const Chat = () => {
               </Button>
               <Button
                 onClick={() => navigate('/personalize')}
-                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-2 sm:px-4"
               >
                 <Settings className="h-4 w-4" />
-                <span>Avatares</span>
+                <span className="hidden sm:inline">Avatares</span>
               </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                  <Button className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-2 sm:px-4">
                     <User className="h-4 w-4" />
-                    <span>Conta</span>
+                    <span className="hidden sm:inline">Conta</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>

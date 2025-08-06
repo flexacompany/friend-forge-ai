@@ -43,7 +43,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                 size="sm"
                 onClick={triggerNotificationCheck}
                 disabled={isLoading}
-                className="text-slate-600 hover:text-emerald-600"
+                className="text-slate-600 hover:bg-emerald-100 hover:text-emerald-600"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
@@ -51,7 +51,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-slate-600 hover:text-slate-800"
+                className="text-slate-600 hover:bg-slate-100 hover:text-slate-800"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -80,7 +80,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                   variant="ghost"
                   size="sm"
                   onClick={clearAll}
-                  className="text-xs text-slate-500 hover:text-slate-700 h-auto p-1"
+                  className="text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700 h-auto p-1"
                 >
                   Limpar todas
                 </Button>
@@ -113,7 +113,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                       variant="ghost"
                       size="sm"
                       onClick={() => markAsRead(notification.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-600 h-auto p-1"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:bg-slate-100 hover:text-slate-600 h-auto p-1"
                     >
                       <X className="w-3 h-3" />
                     </Button>

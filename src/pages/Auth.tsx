@@ -74,7 +74,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex mobile-safe-area">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex mobile-safe-area container-safe">
       {/* Left Side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
@@ -184,7 +184,7 @@ const Auth = () => {
         </div>
         
         {/* Floating Emojis Animation */}
-        <div className="absolute right-8 top-0 bottom-0 w-16 overflow-hidden">
+        <div className="emoji-animation-container lg:absolute lg:right-8 lg:top-0 lg:bottom-0 lg:w-16 lg:overflow-hidden">
           <div className="animate-scroll-up flex flex-col space-y-8 text-4xl">
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🎵</div>
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🎬</div>

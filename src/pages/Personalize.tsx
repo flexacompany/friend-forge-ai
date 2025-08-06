@@ -579,36 +579,37 @@ const Personalize = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-900 container-safe">
       {/* Header */}
-      <header className="bg-slate-800/95 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-10 shadow-sm">
+      <header className="bg-slate-800/95 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-10 shadow-sm personalize-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg">
-                <Settings className="h-7 w-7 text-white" />
+          <div className="flex justify-between items-center h-20 flex-wrap gap-2">
+            <div className="flex items-center space-x-4 min-w-0 flex-1">
+              <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg flex-shrink-0">
+                <Settings className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  IAmigo - Avatares
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent truncate">
+                  <span className="sm:hidden">Avatares</span>
+                  <span className="hidden sm:inline">IAmigo - Avatares</span>
                 </h1>
-                <p className="text-slate-300 text-sm mt-1">Crie e gerencie seus assistentes virtuais</p>
+                <p className="text-slate-300 text-xs sm:text-sm mt-1 hidden sm:block">Crie e gerencie seus assistentes virtuais</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 button-container-safe">
               <Button
                 onClick={() => navigate('/chat')}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-8 py-3 font-semibold"
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-3 sm:px-8 py-2 sm:py-3 font-semibold text-sm sm:text-base"
               >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                <span>Chat</span>
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Chat</span>
               </Button>
               <Button
                 onClick={handleLogout}
-                className="bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 px-6 py-3 font-medium shadow-sm hover:shadow-md"
+                className="bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 px-3 sm:px-6 py-2 sm:py-3 font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
               >
-                <LogOut className="h-5 w-5 mr-2" />
-                <span>Sair</span>
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
             </div>
           </div>
@@ -617,11 +618,11 @@ const Personalize = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Sistema de Abas */}
-        <div className="mb-12">
+        <div className="mb-12 personalize-tabs-container">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 bg-slate-800/50 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur-sm">
             <button
               onClick={() => setActiveTab('create')}
-              className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-sm sm:text-base ${
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
                 activeTab === 'create'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -632,18 +633,18 @@ const Personalize = () => {
             </button>
             <button
               onClick={() => setActiveTab('system')}
-              className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-sm sm:text-base ${
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
                 activeTab === 'system'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
             >
               <Settings className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap">Avatares do Sistema</span>
+              <span className="whitespace-nowrap text-center">Avatares do Sistema</span>
             </button>
             <button
               onClick={() => setActiveTab('my-avatars')}
-              className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-sm sm:text-base ${
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
                 activeTab === 'my-avatars'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -657,37 +658,37 @@ const Personalize = () => {
 
         {/* Conteúdo das Abas */}
         {activeTab === 'create' && (
-          <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden max-w-4xl mx-auto">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-8">
-              <CardTitle className="flex items-center space-x-4 text-slate-100">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg">
-                  {editingAvatar ? <Edit2 className="h-6 w-6 text-white" /> : <Plus className="h-6 w-6 text-white" />}
+          <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden max-w-4xl mx-auto personalize-form">
+            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8">
+              <CardTitle className="flex items-center space-x-3 sm:space-x-4 text-slate-100">
+                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
+                  {editingAvatar ? <Edit2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" /> : <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
                 </div>
-                <div>
-                  <span className="text-2xl font-bold">{editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}</span>
-                  <p className="text-slate-300 text-sm mt-1 font-normal">
+                <div className="min-w-0">
+                  <span className="text-lg sm:text-2xl font-bold">{editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}</span>
+                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal">
                     {editingAvatar ? 'Atualize as informações do seu avatar' : 'Configure seu novo assistente virtual'}
                   </p>
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8 space-y-8">
-              <div className="space-y-3">
-                <Label htmlFor="nome" className="text-slate-200 font-semibold text-base">Nome do Avatar</Label>
+            <CardContent className="p-4 sm:p-8 space-y-6 sm:space-y-8">
+              <div className="space-y-3 personalize-field">
+                <Label htmlFor="nome" className="text-slate-200 font-semibold text-sm sm:text-base">Nome do Avatar</Label>
                 <Input
                   id="nome"
                   value={formData.nome}
                   onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
                   placeholder="Ex: Ana, Carlos, Sofia..."
-                  className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 h-12 px-4 text-base transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md"
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-slate-200 font-semibold text-base">Avatar Visual</Label>
+              <div className="space-y-3 personalize-field">
+                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Avatar Visual</Label>
                 
                 {/* Seletor de tipo de avatar */}
-                <div className="flex space-x-2 mb-4">
+                <div className="flex space-x-2 mb-4 avatar-type-selector">
                   <button
                     type="button"
                     onClick={() => {
@@ -697,7 +698,7 @@ const Personalize = () => {
                         setFormData(prev => ({ ...prev, avatar: '😀', avatarType: 'emoji' }));
                       }
                     }}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 text-sm sm:text-base ${
                       avatarType === 'emoji'
                         ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
                         : 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
@@ -709,7 +710,7 @@ const Personalize = () => {
                   <button
                     type="button"
                     onClick={() => setAvatarType('image')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 text-sm sm:text-base ${
                       avatarType === 'image'
                         ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
                         : 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
@@ -722,13 +723,13 @@ const Personalize = () => {
 
                 {/* Grid de emojis */}
                 {avatarType === 'emoji' && (
-                  <div className="grid grid-cols-6 gap-3 mt-3 p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 mt-3 p-3 sm:p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner emoji-grid">
                     {AVATAR_OPTIONS.map((option) => (
                       <button
                         key={option}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, avatar: option, avatarType: 'emoji' }))}
-                        className={`p-3 text-3xl rounded-xl border-2 transition-all duration-300 hover:scale-110 transform shadow-sm ${
+                        className={`p-2 sm:p-3 text-2xl sm:text-3xl rounded-xl border-2 transition-all duration-300 hover:scale-110 transform shadow-sm ${
                           formData.avatar === option && avatarType === 'emoji'
                             ? 'border-emerald-500 bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xl ring-4 ring-emerald-300/50 scale-105' 
                             : 'border-slate-500 hover:border-emerald-400 bg-slate-600 hover:bg-gradient-to-br hover:from-emerald-600/20 hover:to-teal-600/20 hover:shadow-lg'
@@ -742,14 +743,14 @@ const Personalize = () => {
 
                 {/* Upload de imagem */}
                 {avatarType === 'image' && (
-                  <div className="mt-3 p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner">
-                    <div className="flex flex-col items-center space-y-4">
+                  <div className="mt-3 p-3 sm:p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner image-upload-area">
+                    <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                       {uploadedImage ? (
                         <div className="relative">
                           <img
                             src={uploadedImage}
                             alt="Avatar personalizado"
-                            className="w-24 h-24 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
                           />
                           <button
                             type="button"
@@ -763,8 +764,8 @@ const Personalize = () => {
                           </button>
                         </div>
                       ) : (
-                        <div className="w-24 h-24 border-2 border-dashed border-slate-500 rounded-full flex items-center justify-center">
-                          <Upload className="h-8 w-8 text-slate-400" />
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-dashed border-slate-500 rounded-full flex items-center justify-center">
+                          <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
                         </div>
                       )}
                       
@@ -789,7 +790,7 @@ const Personalize = () => {
                       
                       <label
                         htmlFor="avatar-upload"
-                        className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                        className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm sm:text-base"
                       >
                         <Upload className="h-4 w-4" />
                         <span>{uploadedImage ? 'Trocar Imagem' : 'Carregar Imagem'}</span>
@@ -804,22 +805,22 @@ const Personalize = () => {
                 )}
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-slate-200 font-semibold text-base">Personalidade</Label>
+              <div className="space-y-3 personalize-field">
+                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Personalidade</Label>
                 <Select 
                   value={formData.personalidade} 
                   onValueChange={(value: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist') => 
                     setFormData(prev => ({ ...prev, personalidade: value }))
                   }
                 >
-                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-14 px-4 text-base transition-all duration-200 shadow-sm hover:shadow-md">
+                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-12 sm:h-14 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
                     <SelectValue placeholder="Escolha a personalidade" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md">
+                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md personalize-dropdown">
                     {PERSONALITY_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
+                      <SelectItem key={type.value} value={type.value} className="p-2 sm:p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
                         <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-sm truncate">{type.label}</span>
+                          <span className="font-semibold text-slate-100 text-xs sm:text-sm truncate">{type.label}</span>
                           <span className="text-xs text-slate-300 leading-tight line-clamp-2">{type.description}</span>
                         </div>
                       </SelectItem>
@@ -828,22 +829,22 @@ const Personalize = () => {
                 </Select>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-slate-200 font-semibold text-base">Tom de Voz</Label>
+              <div className="space-y-3 personalize-field">
+                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Tom de Voz</Label>
                 <Select 
                   value={formData.tom} 
                   onValueChange={(value: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise') => 
                     setFormData(prev => ({ ...prev, tom: value }))
                   }
                 >
-                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-14 px-4 text-base transition-all duration-200 shadow-sm hover:shadow-md">
+                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-12 sm:h-14 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
                     <SelectValue placeholder="Escolha o tom de voz" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md">
+                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md personalize-dropdown">
                     {TONE_OPTIONS.map((tone) => (
-                      <SelectItem key={tone.value} value={tone.value} className="p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
+                      <SelectItem key={tone.value} value={tone.value} className="p-2 sm:p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
                         <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-sm truncate">{tone.label}</span>
+                          <span className="font-semibold text-slate-100 text-xs sm:text-sm truncate">{tone.label}</span>
                           <span className="text-xs text-slate-300 leading-tight line-clamp-2">{tone.description}</span>
                         </div>
                       </SelectItem>
@@ -852,37 +853,37 @@ const Personalize = () => {
                 </Select>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="background" className="text-slate-200 font-semibold text-base">História/Background</Label>
+              <div className="space-y-3 personalize-field">
+                <Label htmlFor="background" className="text-slate-200 font-semibold text-sm sm:text-base">História/Background</Label>
                 <Textarea
                   id="background"
                   value={formData.background}
                   onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
                   placeholder="Conte a história do seu avatar, sua formação, experiências..."
-                  className="mt-2 min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-4 text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
+                  className="mt-2 min-h-[100px] sm:min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-3 sm:p-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="interests" className="text-slate-200 font-semibold text-base">Interesses e Especialidades</Label>
+              <div className="space-y-3 personalize-field">
+                <Label htmlFor="interests" className="text-slate-200 font-semibold text-sm sm:text-base">Interesses e Especialidades</Label>
                 <Textarea
                   id="interests"
                   value={formData.interests}
                   onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
                   placeholder="Quais são os interesses, hobbies ou especialidades do avatar?"
-                  className="mt-2 min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-4 text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
+                  className="mt-2 min-h-[100px] sm:min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-3 sm:p-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
                 />
               </div>
 
-              <div className="flex space-x-4 pt-8">
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 sm:pt-8 button-container-safe">
                 <Button 
                   onClick={handleSubmit} 
                   disabled={isLoading || !formData.nome.trim()}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-14 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-12 sm:h-14 text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Salvando...</span>
                     </div>
                   ) : (
@@ -892,7 +893,7 @@ const Personalize = () => {
                 {editingAvatar && (
                   <Button
                     onClick={cancelEdit}
-                    className="px-8 bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 h-14 font-medium shadow-sm hover:shadow-md"
+                    className="px-6 sm:px-8 bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 h-12 sm:h-14 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
                   >
                     Cancelar
                   </Button>
@@ -905,46 +906,46 @@ const Personalize = () => {
         {/* Avatares do Sistema */}
         {activeTab === 'system' && (
           <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-8">
-              <CardTitle className="text-slate-100 flex items-center space-x-4">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg">
-                  <Plus className="h-6 w-6 text-white" />
+            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8 personalize-header">
+              <CardTitle className="text-slate-100 flex items-center space-x-3 sm:space-x-4">
+                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div>
-                  <span className="text-2xl font-bold">Avatares do Sistema</span>
-                  <p className="text-slate-300 text-sm mt-1 font-normal">Escolha entre nossos avatares pré-criados</p>
+                <div className="min-w-0">
+                  <span className="text-lg sm:text-2xl font-bold truncate">Avatares do Sistema</span>
+                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal hidden sm:block">Escolha entre nossos avatares pré-criados</p>
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-8">
               {/* Filtro por Categoria */}
-              <div className="mb-6">
-                <Label className="text-slate-200 font-semibold text-base mb-3 block">Filtrar por Categoria:</Label>
+              <div className="mb-4 sm:mb-6 personalize-field">
+                <Label className="text-slate-200 font-semibold text-sm sm:text-base mb-2 sm:mb-3 block">Filtrar por Categoria:</Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-full md:w-auto border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-12 px-4 text-base transition-all duration-200 shadow-sm hover:shadow-md">
+                  <SelectTrigger className="w-full border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700">
-                    <SelectItem key="all" value="all" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Todas as Categorias</SelectItem>
-                    <SelectItem key="musica" value="musica" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Música</SelectItem>
-                    <SelectItem key="entretenimento" value="entretenimento" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Entretenimento</SelectItem>
-                    <SelectItem key="esportes" value="esportes" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Esportes</SelectItem>
-                    <SelectItem key="profissional" value="profissional" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Profissional</SelectItem>
-                    <SelectItem key="tecnologia" value="tecnologia" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Tecnologia</SelectItem>
-                    <SelectItem key="arte" value="arte" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Arte</SelectItem>
-                    <SelectItem key="outros" value="outros" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20">Outros</SelectItem>
+                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 personalize-dropdown">
+                    <SelectItem key="all" value="all" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Todas as Categorias</SelectItem>
+                    <SelectItem key="musica" value="musica" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Música</SelectItem>
+                    <SelectItem key="entretenimento" value="entretenimento" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Entretenimento</SelectItem>
+                    <SelectItem key="esportes" value="esportes" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Esportes</SelectItem>
+                    <SelectItem key="profissional" value="profissional" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Profissional</SelectItem>
+                    <SelectItem key="tecnologia" value="tecnologia" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Tecnologia</SelectItem>
+                    <SelectItem key="arte" value="arte" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Arte</SelectItem>
+                    <SelectItem key="outros" value="outros" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Grid de Avatares do Sistema */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[600px] overflow-y-auto pr-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 max-h-[500px] sm:max-h-[600px] overflow-y-auto pr-1 sm:pr-2 system-avatars-grid">
                 {systemAvatars
                   .filter(avatar => selectedCategory === 'all' || avatar.categoria === selectedCategory)
                   .map((avatar) => (
-                    <div key={avatar.id} className="p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02]">
-                      <div className="text-center mb-4">
-                        <div className="w-16 h-16 mx-auto mb-3">
+                    <div key={avatar.id} className="p-3 sm:p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02] system-avatar-card">
+                      <div className="text-center mb-3 sm:mb-4">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3">
                           {avatar.avatarType === 'image' ? (
                             <img 
                               src={avatar.avatar} 
@@ -957,21 +958,21 @@ const Personalize = () => {
                             />
                           ) : null}
                           <div 
-                            className={`w-full h-full rounded-full flex items-center justify-center text-4xl ${
+                            className={`w-full h-full rounded-full flex items-center justify-center text-2xl sm:text-4xl ${
                               avatar.avatarType === 'image' ? 'hidden' : 'flex'
                             }`}
                           >
                             {avatar.avatarType === 'image' ? '🎨' : avatar.avatar}
                           </div>
                         </div>
-                        <h3 className="font-bold text-xl text-slate-100 mb-2">{avatar.nome}</h3>
-                        <p className="text-sm text-emerald-400 font-medium mb-2">{avatar.profissao}</p>
+                        <h3 className="font-bold text-base sm:text-xl text-slate-100 mb-1 sm:mb-2">{avatar.nome}</h3>
+                        <p className="text-xs sm:text-sm text-emerald-400 font-medium mb-1 sm:mb-2">{avatar.profissao}</p>
                         <Badge className="text-xs bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border-slate-300 px-2 py-1 rounded-lg font-medium">
                           {avatar.categoria}
                         </Badge>
                       </div>
                       
-                      <div className="space-y-2 text-xs text-slate-300 mb-4">
+                      <div className="space-y-1 sm:space-y-2 text-xs text-slate-300 mb-3 sm:mb-4">
                         <p><span className="font-semibold text-slate-200">Personalidade:</span> {PERSONALITY_TYPES.find(p => p.value === avatar.personalidade)?.label}</p>
                          <p><span className="font-semibold text-slate-200">Tom:</span> {TONE_OPTIONS.find(t => t.value === avatar.tom)?.label}</p>
                         <p><span className="font-semibold text-slate-200">Características:</span> {avatar.caracteristicas}</p>
@@ -983,7 +984,7 @@ const Personalize = () => {
                       <Button
                         onClick={() => addSystemAvatar(avatar)}
                         disabled={isLoading}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-12 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-10 sm:h-12 text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
                         {isLoading ? 'Adicionando...' : 'Adicionar Avatar'}
                       </Button>
@@ -993,7 +994,7 @@ const Personalize = () => {
               </div>
               
               {systemAvatars.filter(avatar => selectedCategory === 'all' || avatar.categoria === selectedCategory).length === 0 && (
-                <p className="text-slate-400 text-center py-8">Nenhum avatar encontrado para esta categoria.</p>
+                <p className="text-slate-400 text-center py-6 sm:py-8 text-sm sm:text-base">Nenhum avatar encontrado para esta categoria.</p>
               )}
             </CardContent>
           </Card>
@@ -1002,80 +1003,80 @@ const Personalize = () => {
         {/* Lista de Avatares do Usuário */}
         {activeTab === 'my-avatars' && (
           <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-8">
-              <CardTitle className="text-slate-100 flex items-center space-x-4">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg">
-                  <Settings className="h-6 w-6 text-white" />
+            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8 personalize-header">
+              <CardTitle className="text-slate-100 flex items-center space-x-3 sm:space-x-4">
+                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
+                  <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
-                <div>
-                  <span className="text-2xl font-bold">Meus Avatares ({avatares.length})</span>
-                  <p className="text-slate-300 text-sm mt-1 font-normal">Gerencie seus assistentes virtuais</p>
+                <div className="min-w-0">
+                  <span className="text-lg sm:text-2xl font-bold">Meus Avatares ({avatares.length})</span>
+                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal hidden sm:block">Gerencie seus assistentes virtuais</p>
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-8">
               {avatares.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-6 rounded-2xl w-24 h-24 mx-auto mb-8 flex items-center justify-center shadow-xl">
-                    <Plus className="h-12 w-12 text-white" />
+                <div className="text-center py-8 sm:py-16 empty-state">
+                  <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-4 sm:p-6 rounded-2xl w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-6 sm:mb-8 flex items-center justify-center shadow-xl">
+                    <Plus className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-100 mb-4">Nenhum avatar criado</h3>
-                  <p className="text-slate-300 text-lg leading-relaxed max-w-md mx-auto">
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-100 mb-3 sm:mb-4">Nenhum avatar criado</h3>
+                  <p className="text-slate-300 text-sm sm:text-lg leading-relaxed max-w-md mx-auto px-4">
                     Crie seu primeiro avatar para começar a conversar!
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
+                <div className="space-y-4 sm:space-y-6 max-h-[500px] sm:max-h-[700px] overflow-y-auto pr-1 sm:pr-2 user-avatars-grid">
                   {avatares.map((avatar) => (
                     <div
                       key={avatar.id}
-                      className="p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02]"
+                      className="p-4 sm:p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02] user-avatar-card"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-4 flex-1">
-                          <div className="bg-gradient-to-br from-slate-600 to-slate-700 p-3 rounded-xl shadow-sm w-16 h-16 flex items-center justify-center">
+                      <div className="flex flex-col sm:flex-row items-start justify-between space-y-3 sm:space-y-0">
+                        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 w-full">
+                          <div className="bg-gradient-to-br from-slate-600 to-slate-700 p-2 sm:p-3 rounded-xl shadow-sm w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center flex-shrink-0">
                             {avatar.avatarType === 'image' || (!AVATAR_OPTIONS.includes(avatar.avatar) && avatar.avatar.startsWith('data:')) ? (
                               <img 
                                 src={avatar.avatar} 
                                 alt={avatar.nome}
-                                className="w-10 h-10 rounded-lg object-cover"
+                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover"
                               />
                             ) : (
-                              <span className="text-4xl">{avatar.avatar}</span>
+                              <span className="text-2xl sm:text-4xl">{avatar.avatar}</span>
                             )}
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-xl text-slate-100 mb-3">{avatar.nome}</h3>
-                            <div className="flex flex-wrap items-center gap-3 mb-4">
-                              <Badge className="text-sm bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 border-emerald-300 px-3 py-1 rounded-lg font-medium">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-lg sm:text-xl text-slate-100 mb-2 sm:mb-3">{avatar.nome}</h3>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                              <Badge className="text-xs sm:text-sm bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 border-emerald-300 px-2 sm:px-3 py-1 rounded-lg font-medium">
                                 {PERSONALITY_TYPES.find(p => p.value === avatar.personalidade)?.label}
                               </Badge>
-                              <Badge className="text-sm bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700 border-teal-300 px-3 py-1 rounded-lg font-medium">
+                              <Badge className="text-xs sm:text-sm bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700 border-teal-300 px-2 sm:px-3 py-1 rounded-lg font-medium">
                                 {TONE_OPTIONS.find(t => t.value === avatar.tom)?.label}
                               </Badge>
                             </div>
                             {avatar.background && (
-                              <p className="text-sm text-slate-300 mt-3 line-clamp-2 leading-relaxed">{avatar.background}</p>
+                              <p className="text-xs sm:text-sm text-slate-300 mt-2 sm:mt-3 line-clamp-2 leading-relaxed">{avatar.background}</p>
                             )}
                             {avatar.interests && (
-                              <p className="text-sm text-emerald-400 mt-3 leading-relaxed">
+                              <p className="text-xs sm:text-sm text-emerald-400 mt-2 sm:mt-3 leading-relaxed">
                                 <span className="font-semibold">Interesses:</span> {avatar.interests}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex space-x-3 ml-4">
+                        <div className="flex space-x-2 sm:space-x-3 ml-0 sm:ml-4 w-full sm:w-auto justify-end">
                           <Button
                             onClick={() => editAvatar(avatar)}
-                            className="p-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border-2 border-emerald-300 hover:border-emerald-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+                            className="p-2 sm:p-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border-2 border-emerald-300 hover:border-emerald-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
                           >
-                            <Edit2 className="h-5 w-5" />
+                            <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
                           </Button>
                           <Button
                             onClick={() => deleteAvatar(avatar.id!)}
-                            className="p-3 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 hover:border-red-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+                            className="p-2 sm:p-3 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 hover:border-red-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
                           >
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                           </Button>
                         </div>
                       </div>
