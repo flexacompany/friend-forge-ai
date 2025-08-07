@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { MessageCircle, Brain, Users, Zap, Shield, Heart, Sparkles } from 'lucid
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
+import { cleanupAuthState, handleAuthError } from "@/utils/authHelpers";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,8 +32,18 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      // Limpar estado anterior antes de fazer nova autenticação
+      cleanupAuthState();
+      
+      // Tentar fazer logout global primeiro para limpar qualquer sessão anterior
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continuar mesmo se falhar
+      }
+
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
@@ -42,15 +52,23 @@ const Auth = () => {
           throw error;
         }
 
-        toast.success('Login realizado com sucesso!');
-        navigate('/chat');
+        if (data.user) {
+          toast.success('Login realizado com sucesso!');
+          // Usar window.location para forçar refresh completo
+          window.location.href = '/chat';
+        }
       } else {
         if (password !== confirmPassword) {
           toast.error('As senhas não coincidem');
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        if (password.length < 6) {
+          toast.error('A senha deve ter pelo menos 6 caracteres');
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -62,11 +80,18 @@ const Auth = () => {
           throw error;
         }
 
-        toast.success('Conta criada com sucesso! Verifique seu e-mail.');
+        if (data.user) {
+          if (data.user.email_confirmed_at) {
+            toast.success('Conta criada com sucesso!');
+            window.location.href = '/chat';
+          } else {
+            toast.success('Conta criada com sucesso! Verifique seu e-mail para ativar a conta.');
+          }
+        }
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Erro na autenticação:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar solicitação';
+      const errorMessage = handleAuthError(error);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -115,6 +140,7 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 className="h-11 text-sm border border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg bg-slate-700 text-white placeholder:text-slate-400"
               />
             </div>
@@ -130,6 +156,7 @@ const Auth = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  minLength={6}
                   className="h-11 text-sm border border-slate-600 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg bg-slate-700 text-white placeholder:text-slate-400"
                 />
               </div>
@@ -198,7 +225,6 @@ const Auth = () => {
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🚀</div>
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🎭</div>
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🏆</div>
-            {/* Duplicate for seamless loop */}
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🎵</div>
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">🎬</div>
             <div className="opacity-80 hover:opacity-100 transition-opacity duration-300">⚽</div>
