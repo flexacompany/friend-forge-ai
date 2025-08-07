@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -24,28 +25,8 @@ export const useNotifications = () => {
         return;
       }
 
-      // Buscar apenas mensagens de reengajamento dos últimos 5 minutos
-      // Estas são mensagens que foram enviadas após o usuário ficar inativo por 24h
+      // Buscar mensagens recentes dos últimos 5 minutos
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      // Primeiro, buscar conversas que tiveram notificação enviada
-      const { data: notifiedConversations, error: activityError } = await supabase
-        .from('conversation_activity')
-        .select('user_id, avatar_id')
-        .eq('user_id', user.id)
-        .eq('notification_sent', true);
-
-      if (activityError) {
-        console.error('Erro ao buscar atividades:', activityError);
-        return;
-      }
-
-      if (!notifiedConversations || notifiedConversations.length === 0) {
-        return;
-      }
-
-      // Buscar mensagens recentes dos avatares que enviaram notificações
-      const avatarIds = notifiedConversations.map(conv => conv.avatar_id);
       
       const { data: recentMessages, error } = await supabase
         .from('mensagens')
@@ -58,7 +39,6 @@ export const useNotifications = () => {
         `)
         .eq('user_id', user.id)
         .eq('is_user', false)
-        .in('avatar_id', avatarIds)
         .gte('created_at', fiveMinutesAgo)
         .order('created_at', { ascending: false });
 
@@ -174,27 +154,9 @@ export const useNotifications = () => {
               filter: `user_id=eq.${user.id}`,
             },
             (payload) => {
-              // Só processar se for uma mensagem de avatar E se for uma mensagem de reengajamento
-              // Verificamos isso consultando se a notification foi marcada como enviada
+              // Só processar se for uma mensagem de avatar
               if (!payload.new.is_user) {
-                // Aguardar um pouco e verificar se é uma mensagem de reengajamento
-                setTimeout(async () => {
-                  try {
-                    const { data: activityData } = await supabase
-                      .from('conversation_activity')
-                      .select('notification_sent')
-                      .eq('user_id', payload.new.user_id)
-                      .eq('avatar_id', payload.new.avatar_id)
-                      .single();
-                    
-                    // Só mostrar notificação se for uma mensagem de reengajamento
-                    if (activityData?.notification_sent) {
-                      checkForNewMessages();
-                    }
-                  } catch (error) {
-                    console.log('Erro ao verificar se é mensagem de reengajamento:', error);
-                  }
-                }, 1000);
+                setTimeout(checkForNewMessages, 1000);
               }
             }
           )

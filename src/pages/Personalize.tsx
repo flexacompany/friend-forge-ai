@@ -1,37 +1,54 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit2, Plus, Settings, LogOut, MessageCircle, Upload, Image } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Sparkles, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  MessageCircle, 
+  Settings,
+  User,
+  Heart,
+  Briefcase,
+  Users,
+  BookOpen,
+  Target,
+  Brain,
+  Wand2,
+  ArrowLeft,
+  Upload,
+  Camera
+} from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 interface AvatarData {
-  id?: string;
+  id: string;
   nome: string;
-  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist' | 'romantic' | 'father' | 'mother' | 'sibling' | 'neighbor' | 'grandparent' | 'bestfriend' | 'collegestudent' | 'schoolmate';
+  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
   tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
-  avatarType?: 'emoji' | 'image';
-  background: string;
-  interests: string;
+  avatarType: 'emoji' | 'image';
+  background: string | null;
+  interests: string | null;
 }
 
 interface SystemAvatarData {
   id: string;
   nome: string;
-  categoria: 'musica' | 'entretenimento' | 'esportes' | 'profissional' | 'tecnologia' | 'arte' | 'outros';
+  categoria: string;
   profissao: string;
-  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist' | 'romantic' | 'father' | 'mother' | 'sibling' | 'neighbor' | 'grandparent' | 'bestfriend' | 'collegestudent' | 'schoolmate';
-  tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
+  personalidade: string;
+  tom: string;
   avatar: string;
-  avatarType?: 'emoji' | 'image';
   background: string;
   interests: string;
   caracteristicas: string;
@@ -39,1053 +56,699 @@ interface SystemAvatarData {
 }
 
 const PERSONALITY_TYPES = [
-  { value: 'friend', label: 'Amigo', description: 'Casual e acolhedor, sempre pronto para uma conversa amigável.' },
-  { value: 'consultant', label: 'Consultor', description: 'Profissional e estratégico, oferece insights práticos e soluções eficazes.' },
-  { value: 'colleague', label: 'Colega de Trabalho', description: 'Colaborativo e motivador, ideal para discussões de projetos e trabalho em equipe.' },
-  { value: 'mentor', label: 'Mentor', description: 'Sábio e orientador, focado no desenvolvimento pessoal e profissional.' },
-  { value: 'coach', label: 'Coach', description: 'Motivacional focado em resultados, ajuda a alcançar objetivos e superar desafios.' },
-  { value: 'therapist', label: 'Terapeuta', description: 'Compreensivo e empático, oferece suporte emocional e ajuda na reflexão.' },
-  { value: 'romantic', label: 'Companheiro(a)', description: 'Carinhoso e atencioso, demonstra afeto e interesse romântico respeitoso.' },
-  { value: 'father', label: 'Figura Paterna', description: 'Protetor e orientador, oferece conselhos sábios com amor paternal.' },
-  { value: 'mother', label: 'Figura Materna', description: 'Acolhedora e cuidadosa, proporciona conforto e apoio maternal.' },
-  { value: 'sibling', label: 'Irmão/Irmã', description: 'Companheiro leal e divertido, compartilha experiências com cumplicidade fraternal.' },
-  { value: 'neighbor', label: 'Vizinho Amigável', description: 'Cordial e prestativo, sempre disponível para uma conversa casual.' },
-  { value: 'grandparent', label: 'Avô/Avó', description: 'Sábio e carinhoso, compartilha experiências de vida com ternura.' },
-  { value: 'bestfriend', label: 'Melhor Amigo', description: 'Leal e confiável, oferece apoio incondicional e momentos divertidos.' },
-  { value: 'collegestudent', label: 'Colega de Faculdade', description: 'Intelectual e colaborativo, compartilha conhecimentos acadêmicos e experiências universitárias.' },
-  { value: 'schoolmate', label: 'Colega de Escola', description: 'Jovial e energético, traz nostalgia escolar e conversas descontraídas.' }
+  { id: 'friend', name: 'Amigo', icon: Heart, description: 'Casual, próximo e sempre disponível para uma conversa' },
+  { id: 'consultant', name: 'Consultor', icon: Briefcase, description: 'Profissional e estratégico, oferece insights práticos' },
+  { id: 'colleague', name: 'Colega de Trabalho', icon: Users, description: 'Colaborativo e motivador para projetos' },
+  { id: 'mentor', name: 'Mentor', icon: BookOpen, description: 'Sábio e orientador para desenvolvimento pessoal' },
+  { id: 'coach', name: 'Coach', icon: Target, description: 'Focado em resultados e superação de desafios' },
+  { id: 'therapist', name: 'Terapeuta', icon: Brain, description: 'Empático e compreensivo, oferece suporte emocional' }
 ];
 
 const TONE_OPTIONS = [
-  { value: 'friendly', label: 'Amigável', description: 'Caloroso e próximo, usando uma linguagem acessível e acolhedora.' },
-  { value: 'formal', label: 'Formal', description: 'Profissional e respeitoso, mantendo um padrão formal mas não distante.' },
-  { value: 'playful', label: 'Divertido', description: 'Descontraído e alegre, com um toque de humor apropriado.' },
-  { value: 'empathetic', label: 'Empático', description: 'Compreensivo e acolhedor, demonstrando empatia e sensibilidade.' },
-  { value: 'witty', label: 'Espirituoso', description: 'Inteligente com humor sutil, usando referências inteligentes quando apropriado.' },
-  { value: 'wise', label: 'Sábio', description: 'Reflexivo e profundo, oferecendo perspectivas thoughtful e consideradas.' }
+  { id: 'friendly', name: 'Amigável', description: 'Caloroso e próximo' },
+  { id: 'formal', name: 'Formal', description: 'Profissional e respeitoso' },
+  { id: 'playful', name: 'Divertido', description: 'Descontraído e alegre' },
+  { id: 'empathetic', name: 'Empático', description: 'Compreensivo e acolhedor' },
+  { id: 'witty', name: 'Espirituoso', description: 'Inteligente com humor sutil' },
+  { id: 'wise', name: 'Sábio', description: 'Reflexivo e profundo' }
 ];
 
-const AVATAR_OPTIONS = ['😀', '😎', '🤓', '🧐', '🤖', '👻', '👽', '😻', '🐶', '🦊', '🐻', '🐼', '🦁', '🐯', '🐴', '🦄', '🦋', '🐞', '🐢', '🌱', '🍄', '🌟', '🌈', '🍕', '🍔', '🍦', '⚽', '🏀', '🎮', '🎨', '📚', '🎵', '📸', '🚀', '💡', '🔑', '🎁', '🎈', '🎉'];
-
-const SYSTEM_AVATARS: SystemAvatarData[] = [
-  // Música
-  {
-    id: 'luna-kpop',
-    nome: 'Luna Park',
-    categoria: 'musica',
-    profissao: 'Cantora K-Pop',
-    personalidade: 'friend',
-    tom: 'playful',
-    avatar: '👩',
-    background: 'Estrela do K-Pop com milhões de fãs ao redor do mundo',
-    interests: 'dança, moda, cultura coreana, interação com fãs',
-    caracteristicas: 'Energética, carismática, dedicada aos fãs, perfeccionista nos ensaios',
-    inspiracao: 'Inspirada em ídolos K-Pop como IU e Taeyeon'
-  },
-  {
-    id: 'alex-rapper',
-    nome: 'Alex Flow',
-    categoria: 'musica',
-    profissao: 'Rapper',
-    personalidade: 'bestfriend',
-    tom: 'witty',
-    avatar: '🧑',
-    background: 'Rapper underground que conquistou o mainstream com letras inteligentes',
-    interests: 'hip-hop, poesia, justiça social, produção musical',
-    caracteristicas: 'Inteligente, autêntico, socialmente consciente, criativo',
-    inspiracao: 'Inspirado em rappers como Kendrick Lamar e Emicida'
-  },
-  {
-    id: 'carlos-sertanejo',
-    nome: 'Carlos Viola',
-    categoria: 'musica',
-    profissao: 'Cantor Sertanejo',
-    personalidade: 'neighbor',
-    tom: 'friendly',
-    avatar: '👨',
-    background: 'Cantor sertanejo raiz que valoriza as tradições do interior',
-    interests: 'vida no campo, família, tradições, cavalgadas',
-    caracteristicas: 'Simples, autêntico, família acima de tudo, contador de histórias',
-    inspiracao: 'Inspirado em duplas como Chitãozinho & Xororó'
-  },
-  {
-    id: 'maya-rock',
-    nome: 'Maya Storm',
-    categoria: 'musica',
-    profissao: 'Rockeira',
-    personalidade: 'sibling',
-    tom: 'witty',
-    avatar: '🎸',
-    background: 'Guitarrista e vocalista de uma banda de rock alternativo',
-    interests: 'guitarra, composição, shows ao vivo, liberdade artística',
-    caracteristicas: 'Rebelde, apaixonada pela música, independente, autêntica',
-    inspiracao: 'Inspirada em artistas como Joan Jett e Alanis Morissette'
-  },
-  // Entretenimento
-  {
-    id: 'sofia-atriz',
-    nome: 'Sofia Estrela',
-    categoria: 'entretenimento',
-    profissao: 'Atriz',
-    personalidade: 'romantic',
-    tom: 'empathetic',
-    avatar: '👩‍🎭',
-    background: 'Atriz premiada conhecida por papéis dramáticos marcantes',
-    interests: 'teatro, cinema, literatura, causas humanitárias',
-    caracteristicas: 'Emotiva, empática, dedicada à arte, socialmente engajada',
-    inspiracao: 'Inspirada em atrizes como Meryl Streep e Fernanda Montenegro'
-  },
-  {
-    id: 'ricardo-ator',
-    nome: 'Ricardo Cena',
-    categoria: 'entretenimento',
-    profissao: 'Ator',
-    personalidade: 'mentor',
-    tom: 'wise',
-    avatar: '👨‍🎭',
-    background: 'Ator veterano com décadas de experiência em cinema e TV',
-    interests: 'atuação, direção, ensino, preservação cultural',
-    caracteristicas: 'Sábio, experiente, mentor de jovens atores, respeitado',
-    inspiracao: 'Inspirado em atores como Anthony Hopkins e Lima Duarte'
-  },
-  // Esportes
-  {
-    id: 'diego-futebol',
-    nome: 'Diego Gol',
-    categoria: 'esportes',
-    profissao: 'Jogador de Futebol',
-    personalidade: 'coach',
-    tom: 'friendly',
-    avatar: '👦',
-    background: 'Atacante habilidoso conhecido por gols decisivos',
-    interests: 'futebol, treinos, família, projetos sociais',
-    caracteristicas: 'Determinado, líder em campo, humilde, dedicado',
-    inspiracao: 'Inspirado em jogadores como Pelé e Ronaldinho'
-  },
-  {
-    id: 'ana-basquete',
-    nome: 'Ana Slam',
-    categoria: 'esportes',
-    profissao: 'Jogadora de Basquete',
-    personalidade: 'bestfriend',
-    tom: 'playful',
-    avatar: '👧',
-    background: 'Armadora talentosa com visão de jogo excepcional',
-    interests: 'basquete, estratégia, empoderamento feminino, juventude',
-    caracteristicas: 'Competitiva, estratégica, inspiradora, trabalho em equipe',
-    inspiracao: 'Inspirada em jogadoras como Sue Bird e Hortência'
-  },
-  {
-    id: 'max-f1',
-    nome: 'Max Velocidade',
-    categoria: 'esportes',
-    profissao: 'Piloto de Fórmula 1',
-    personalidade: 'colleague',
-    tom: 'formal',
-    avatar: '🧔',
-    background: 'Piloto de F1 conhecido pela precisão e velocidade',
-    interests: 'automobilismo, tecnologia, precisão, adrenalina',
-    caracteristicas: 'Focado, preciso, corajoso, tecnicamente excelente',
-    inspiracao: 'Inspirado em pilotos como Ayrton Senna e Lewis Hamilton'
-  },
-  // Profissionais
-  {
-    id: 'helena-politica',
-    nome: 'Helena Justiça',
-    categoria: 'profissional',
-    profissao: 'Política',
-    personalidade: 'consultant',
-    tom: 'formal',
-    avatar: '⚖️',
-    background: 'Política experiente focada em políticas públicas sociais',
-    interests: 'política, justiça social, educação, saúde pública',
-    caracteristicas: 'Íntegra, determinada, focada no bem comum, articulada',
-    inspiracao: 'Inspirada em políticas como Angela Merkel e Dilma Rousseff'
-  },
-  {
-    id: 'pedro-advogado',
-    nome: 'Pedro Direito',
-    categoria: 'profissional',
-    profissao: 'Advogado',
-    personalidade: 'consultant',
-    tom: 'formal',
-    avatar: '🤵',
-    background: 'Advogado criminalista conhecido por defender causas justas',
-    interests: 'direito, justiça, leitura, casos complexos',
-    caracteristicas: 'Analítico, ético, persuasivo, defensor da justiça',
-    inspiracao: 'Inspirado em advogados como Rui Barbosa'
-  },
-  {
-    id: 'carla-contadora',
-    nome: 'Carla Números',
-    categoria: 'profissional',
-    profissao: 'Contadora',
-    personalidade: 'colleague',
-    tom: 'formal',
-    avatar: '📊',
-    background: 'Contadora especializada em consultoria empresarial',
-    interests: 'finanças, planejamento, organização, eficiência',
-    caracteristicas: 'Organizada, detalhista, confiável, estratégica',
-    inspiracao: 'Profissional dedicada às ciências contábeis'
-  },
-  {
-    id: 'bruno-personal',
-    nome: 'Bruno Força',
-    categoria: 'profissional',
-    profissao: 'Personal Trainer',
-    personalidade: 'coach',
-    tom: 'friendly',
-    avatar: '💪',
-    background: 'Personal trainer especializado em transformações corporais',
-    interests: 'fitness, nutrição, motivação, saúde',
-    caracteristicas: 'Motivador, disciplinado, conhecedor, encorajador',
-    inspiracao: 'Profissional dedicado ao fitness e bem-estar'
-  },
-  // Tecnologia
-  {
-    id: 'lucas-dev',
-    nome: 'Lucas Code',
-    categoria: 'tecnologia',
-    profissao: 'Desenvolvedor',
-    personalidade: 'colleague',
-    tom: 'friendly',
-    avatar: '👨‍💻',
-    background: 'Desenvolvedor full-stack apaixonado por tecnologias inovadoras',
-    interests: 'programação, IA, open source, inovação',
-    caracteristicas: 'Criativo, lógico, colaborativo, sempre aprendendo',
-    inspiracao: 'Desenvolvedor moderno focado em soluções tecnológicas'
-  },
-  {
-    id: 'gabi-gamer',
-    nome: 'Gabi Player',
-    categoria: 'tecnologia',
-    profissao: 'Gamer Profissional',
-    personalidade: 'bestfriend',
-    tom: 'playful',
-    avatar: '👾',
-    background: 'Gamer profissional especializada em e-sports',
-    interests: 'games, estratégia, competições, streaming',
-    caracteristicas: 'Competitiva, estratégica, divertida, dedicada',
-    inspiracao: 'Gamer profissional do cenário de e-sports'
-  },
-  {
-    id: 'nina-streamer',
-    nome: 'Nina Live',
-    categoria: 'tecnologia',
-    profissao: 'Streamer',
-    personalidade: 'friend',
-    tom: 'playful',
-    avatar: '📹',
-    background: 'Streamer popular conhecida por conteúdo divertido e interativo',
-    interests: 'streaming, jogos, interação com chat, entretenimento',
-    caracteristicas: 'Carismática, divertida, interativa, criativa',
-    inspiracao: 'Streamer moderna focada em entretenimento'
-  },
-  {
-    id: 'rafael-influencer',
-    nome: 'Rafael Viral',
-    categoria: 'tecnologia',
-    profissao: 'Influenciador Digital',
-    personalidade: 'friend',
-    tom: 'friendly',
-    avatar: '📲',
-    background: 'Influenciador digital focado em lifestyle e motivação',
-    interests: 'redes sociais, tendências, motivação, lifestyle',
-    caracteristicas: 'Carismático, motivador, conectado, inspirador',
-    inspiracao: 'Influenciador moderno das redes sociais'
-  },
-  // Arte
-  {
-    id: 'marina-pintora',
-    nome: 'Marina Cores',
-    categoria: 'arte',
-    profissao: 'Pintora',
-    personalidade: 'mentor',
-    tom: 'wise',
-    avatar: '🎨',
-    background: 'Pintora renomada conhecida por obras expressivas e coloridas',
-    interests: 'pintura, arte contemporânea, ensino, exposições',
-    caracteristicas: 'Criativa, sensível, inspiradora, técnica apurada',
-    inspiracao: 'Artista dedicada às artes visuais'
-  },
-  // Outros
-  {
-    id: 'joao-estudante',
-    nome: 'João Saber',
-    categoria: 'outros',
-    profissao: 'Estudante Universitário',
-    personalidade: 'collegestudent',
-    tom: 'friendly',
-    avatar: '🎓',
-    background: 'Estudante de medicina dedicado aos estudos e pesquisa',
-    interests: 'medicina, pesquisa, estudos, vida acadêmica',
-    caracteristicas: 'Estudioso, curioso, dedicado, colaborativo',
-    inspiracao: 'Estudante universitário típico'
-  },
-  {
-    id: 'roberto-meia-idade',
-    nome: 'Roberto Experiência',
-    categoria: 'outros',
-    profissao: 'Profissional Experiente',
-    personalidade: 'father',
-    tom: 'wise',
-    avatar: '👔',
-    background: 'Profissional de meia-idade com vasta experiência de vida',
-    interests: 'família, trabalho, hobbies, conselhos de vida',
-    caracteristicas: 'Experiente, sábio, paternal, equilibrado',
-    inspiracao: 'Profissional maduro e experiente'
-  },
-  {
-    id: 'mike-lutador',
-    nome: 'Mike Punho',
-    categoria: 'esportes',
-    profissao: 'Lutador de MMA',
-    personalidade: 'coach',
-    tom: 'empathetic',
-    avatar: '🥊',
-    background: 'Lutador de MMA conhecido pela disciplina e respeito',
-    interests: 'artes marciais, disciplina, treino, filosofia de luta',
-    caracteristicas: 'Disciplinado, respeitoso, forte mentalmente, humilde',
-    inspiracao: 'Lutador profissional de MMA'
-  }
-];
+const DEFAULT_EMOJIS = ['🤖', '👨‍💼', '👩‍💼', '🧑‍🏫', '👨‍🔬', '👩‍🔬', '🧑‍💻', '👨‍⚕️', '👩‍⚕️', '🧑‍🎨'];
 
 const Personalize = () => {
-  const navigate = useNavigate();
   const [avatares, setAvatares] = useState<AvatarData[]>([]);
   const [systemAvatars, setSystemAvatars] = useState<SystemAvatarData[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'create' | 'system' | 'my-avatars'>('create');
-  const [formData, setFormData] = useState<AvatarData>({
+  const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedSystemAvatar, setSelectedSystemAvatar] = useState<SystemAvatarData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [formData, setFormData] = useState({
     nome: '',
-    personalidade: 'friend',
-    tom: 'friendly',
-    avatar: '😀',
-    avatarType: 'emoji',
+    personalidade: '' as AvatarData['personalidade'],
+    tom: '' as AvatarData['tom'],
+    avatar: '🤖',
+    avatarType: 'emoji' as 'emoji' | 'image',
     background: '',
     interests: ''
   });
-  const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [avatarType, setAvatarType] = useState<'emoji' | 'image'>('emoji');
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-
-  const checkAuth = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/auth');
-    }
-  }, [navigate]);
-
-  const loadAvatares = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('avatares')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      const mappedData: AvatarData[] = data.map(avatar => ({
-        id: avatar.id,
-        nome: avatar.nome,
-        personalidade: avatar.personalidade,
-        tom: avatar.tom,
-        avatar: avatar.avatar,
-        avatarType: avatar.avatar_type || 'emoji',
-        background: avatar.background || '',
-        interests: avatar.interests || ''
-      }));
-      
-      setAvatares(mappedData);
-    } catch (error) {
-      console.error('Erro ao carregar avatares:', error);
-      toast.error('Erro ao carregar avatares.');
-    }
-  }, []);
-
-  const loadSystemAvatars = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('system_avatars')
-        .select('*')
-        .order('categoria', { ascending: true });
-
-      if (error) throw error;
-      setSystemAvatars(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar avatares do sistema:', error);
-      // Se não conseguir carregar do banco, usa os avatares locais
-      setSystemAvatars(SYSTEM_AVATARS);
-    }
-  }, []);
 
   useEffect(() => {
     checkAuth();
     loadAvatares();
     loadSystemAvatars();
-  }, [checkAuth, loadAvatares, loadSystemAvatars]);
+  }, []);
 
-  const addSystemAvatar = async (systemAvatar: SystemAvatarData) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Usuário não autenticado.');
-        return;
-      }
-
-      setIsLoading(true);
-
-      const avatarData = {
-        user_id: user.id,
-        nome: systemAvatar.nome,
-        personalidade: systemAvatar.personalidade,
-        tom: systemAvatar.tom,
-        avatar: systemAvatar.avatar,
-        avatar_type: 'emoji',
-        background: systemAvatar.background,
-        interests: systemAvatar.interests
-      };
-
-      const { error } = await supabase
-        .from('avatares')
-        .insert([avatarData]);
-
-      if (error) throw error;
-
-      toast.success(`Avatar ${systemAvatar.nome} adicionado com sucesso!`);
-      loadAvatares();
-    } catch (error) {
-      console.error('Erro ao adicionar avatar do sistema:', error);
-      toast.error('Erro ao adicionar avatar. Tente novamente.');
-    } finally {
-      setIsLoading(false);
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate('/auth');
     }
   };
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
+  const loadAvatares = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Usuário não autenticado');
+      const { data, error } = await supabase
+        .from('avatares')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
+        id: avatar.id,
+        nome: avatar.nome,
+        personalidade: avatar.personalidade as AvatarData['personalidade'],
+        tom: avatar.tom as AvatarData['tom'],
+        avatar: avatar.avatar,
+        avatarType: 'emoji' as 'emoji' | 'image',
+        background: avatar.background,
+        interests: avatar.interests
+      }));
+      
+      setAvatares(typedAvatares);
+    } catch (error) {
+      console.error('Erro ao carregar avatares:', error);
+      toast.error('Erro ao carregar avatares');
+    }
+  };
+
+  const loadSystemAvatars = async () => {
+    try {
+      // Usando a função personalizada que lida com RLS corretamente
+      const { data, error } = await supabase.rpc('list_system_avatars', { limit_count: 6 });
+      
+      if (error) {
+        console.error('Erro ao carregar avatares do sistema:', error);
         return;
       }
 
-      // Preparar dados do avatar com o tipo e imagem corretos
-      const { avatarType: _, ...formDataWithoutAvatarType } = formData;
-      const avatarData = {
-        ...formDataWithoutAvatarType,
-        avatar_type: avatarType,
-        avatar: avatarType === 'image' && uploadedImage ? uploadedImage : formData.avatar
-      };
+      setSystemAvatars(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar avatares do sistema:', error);
+    }
+  };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.nome || !formData.personalidade || !formData.tom) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
       if (editingAvatar) {
         // Atualizar avatar existente
         const { error } = await supabase
           .from('avatares')
-          .update(avatarData)
+          .update({
+            nome: formData.nome,
+            personalidade: formData.personalidade,
+            tom: formData.tom,
+            avatar: formData.avatar,
+            background: formData.background || null,
+            interests: formData.interests || null
+          })
           .eq('id', editingAvatar.id);
 
         if (error) throw error;
         toast.success('Avatar atualizado com sucesso!');
       } else {
-        // Criar novo avatar - adicionar user_id do usuário logado
-        const avatarToInsert = {
-          ...avatarData,
-          user_id: session.user.id
-        };
-
-        const { data, error } = await supabase
+        // Criar novo avatar
+        const { error } = await supabase
           .from('avatares')
-          .insert([avatarToInsert])
-          .select();
+          .insert({
+            user_id: user.id,
+            nome: formData.nome,
+            personalidade: formData.personalidade,
+            tom: formData.tom,
+            avatar: formData.avatar,
+            background: formData.background || null,
+            interests: formData.interests || null
+          });
 
         if (error) throw error;
         toast.success('Avatar criado com sucesso!');
       }
 
-      loadAvatares();
       resetForm();
+      loadAvatares();
     } catch (error) {
       console.error('Erro ao salvar avatar:', error);
-      toast.error('Erro ao salvar avatar. Tente novamente.');
+      toast.error('Erro ao salvar avatar');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const deleteAvatar = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este avatar?')) {
+  const handleSystemAvatarSelect = async (systemAvatar: SystemAvatarData) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Usuário não autenticado');
       return;
     }
+
+    try {
+      // Inserir o avatar do sistema como um avatar pessoal do usuário
+      const { error } = await supabase
+        .from('avatares')
+        .insert({
+          user_id: user.id,
+          nome: systemAvatar.nome,
+          personalidade: systemAvatar.personalidade as AvatarData['personalidade'],
+          tom: systemAvatar.tom as AvatarData['tom'],
+          avatar: systemAvatar.avatar,
+          background: systemAvatar.background,
+          interests: systemAvatar.interests
+        });
+
+      if (error) throw error;
+      
+      toast.success(`Avatar "${systemAvatar.nome}" adicionado aos seus avatares!`);
+      loadAvatares();
+    } catch (error) {
+      console.error('Erro ao adicionar avatar do sistema:', error);
+      toast.error('Erro ao adicionar avatar');
+    }
+  };
+
+  const handleEdit = (avatar: AvatarData) => {
+    setEditingAvatar(avatar);
+    setFormData({
+      nome: avatar.nome,
+      personalidade: avatar.personalidade,
+      tom: avatar.tom,
+      avatar: avatar.avatar,
+      avatarType: avatar.avatarType,
+      background: avatar.background || '',
+      interests: avatar.interests || ''
+    });
+    setShowCreateForm(true);
+  };
+
+  const handleDelete = async (avatarId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este avatar?')) return;
 
     try {
       const { error } = await supabase
         .from('avatares')
         .delete()
-        .eq('id', id);
+        .eq('id', avatarId);
 
       if (error) throw error;
       toast.success('Avatar excluído com sucesso!');
       loadAvatares();
     } catch (error) {
       console.error('Erro ao excluir avatar:', error);
-      toast.error('Erro ao excluir avatar. Tente novamente.');
+      toast.error('Erro ao excluir avatar');
     }
-  };
-
-  const editAvatar = (avatar: AvatarData) => {
-    setEditingAvatar(avatar);
-    setFormData({ ...avatar });
-    
-    // Determinar o tipo de avatar e configurar estados
-    if (avatar.avatarType === 'image' || (!AVATAR_OPTIONS.includes(avatar.avatar) && avatar.avatar.startsWith('data:'))) {
-      setAvatarType('image');
-      setUploadedImage(avatar.avatar);
-    } else {
-      setAvatarType('emoji');
-      setUploadedImage(null);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingAvatar(null);
-    resetForm();
   };
 
   const resetForm = () => {
     setFormData({
       nome: '',
-      personalidade: 'friend',
-      tom: 'friendly',
-      avatar: '😀',
+      personalidade: '' as AvatarData['personalidade'],
+      tom: '' as AvatarData['tom'],
+      avatar: '🤖',
       avatarType: 'emoji',
       background: '',
       interests: ''
     });
     setEditingAvatar(null);
-    setAvatarType('emoji');
-    setUploadedImage(null);
+    setShowCreateForm(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast.error('Imagem muito grande. Máximo 2MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({
+          ...prev,
+          avatar: event.target?.result as string,
+          avatarType: 'image'
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-900 container-safe">
-      {/* Header */}
-      <header className="bg-slate-800/95 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-10 shadow-sm personalize-header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20 flex-wrap gap-2">
-            <div className="flex items-center space-x-4 min-w-0 flex-1">
-              <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-3 rounded-xl shadow-lg flex-shrink-0">
-                <Settings className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent truncate">
-                  <span className="sm:hidden">Avatares</span>
-                  <span className="hidden sm:inline">IAmigo - Avatares</span>
-                </h1>
-                <p className="text-slate-300 text-xs sm:text-sm mt-1 hidden sm:block">Crie e gerencie seus assistentes virtuais</p>
+  const renderAvatar = (avatar: AvatarData | SystemAvatarData) => {
+    const isSystemAvatar = 'categoria' in avatar;
+    const avatarType = isSystemAvatar ? 'emoji' : (avatar as AvatarData).avatarType;
+    
+    return (
+      <Avatar className="h-12 w-12 flex-shrink-0">
+        {avatarType === 'image' && !isSystemAvatar ? (
+          <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
+        ) : (
+          <AvatarFallback className="text-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+            {avatar.avatar}
+          </AvatarFallback>
+        )}
+      </Avatar>
+    );
+  };
+
+  const selectedPersonality = PERSONALITY_TYPES.find(p => p.id === formData.personalidade);
+  const selectedTone = TONE_OPTIONS.find(t => t.id === formData.tom);
+
+  if (showCreateForm) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container-safe">
+        {/* Header */}
+        <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-3">
+                <Button
+                  onClick={resetForm}
+                  className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Voltar</span>
+                </Button>
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg">
+                  <Wand2 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                    {editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}
+                  </h1>
+                  <p className="text-sm text-slate-300">Configure a personalidade e características</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 button-container-safe">
+          </div>
+        </header>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="text-center pb-8">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <Avatar className="h-24 w-24 shadow-lg">
+                    {formData.avatarType === 'image' ? (
+                      <AvatarImage src={formData.avatar} alt="Avatar Preview" className="object-cover" />
+                    ) : (
+                      <AvatarFallback className="text-4xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                        {formData.avatar}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+              
+              <CardTitle className="text-3xl font-bold text-slate-800 mb-2">
+                {formData.nome || 'Novo Avatar'}
+              </CardTitle>
+              {formData.personalidade && formData.tom && (
+                <CardDescription className="text-lg text-slate-600">
+                  {selectedPersonality?.name} • {selectedTone?.name}
+                </CardDescription>
+              )}
+            </CardHeader>
+
+            <CardContent className="space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Nome */}
+                <div className="space-y-2">
+                  <Label htmlFor="nome" className="text-lg font-semibold text-slate-700">
+                    Nome do Avatar *
+                  </Label>
+                  <Input
+                    id="nome"
+                    value={formData.nome}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                    placeholder="Ex: Alex, Maria, Dr. Silva..."
+                    className="text-lg p-4 border-2 border-slate-200 focus:border-emerald-500 rounded-xl"
+                    required
+                  />
+                </div>
+
+                {/* Avatar Selection */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold text-slate-700">Escolha um Emoji</Label>
+                  <div className="grid grid-cols-5 gap-3">
+                    {DEFAULT_EMOJIS.map((emoji) => (
+                      <Button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, avatar: emoji, avatarType: 'emoji' }))}
+                        className={`h-16 w-16 text-2xl rounded-xl transition-all duration-200 ${
+                          formData.avatar === emoji && formData.avatarType === 'emoji'
+                            ? 'bg-emerald-500 text-white shadow-lg scale-105' 
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {emoji}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Personalidade */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold text-slate-700">Personalidade *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {PERSONALITY_TYPES.map((personality) => {
+                      const Icon = personality.icon;
+                      const isSelected = formData.personalidade === personality.id;
+                      
+                      return (
+                        <Card 
+                          key={personality.id}
+                          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${
+                            isSelected 
+                              ? 'border-2 border-emerald-500 bg-emerald-50 shadow-lg' 
+                              : 'border-2 border-slate-200 hover:border-emerald-300'
+                          }`}
+                          onClick={() => setFormData(prev => ({ ...prev, personalidade: personality.id as AvatarData['personalidade'] }))}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start space-x-3">
+                              <div className={`p-2 rounded-lg ${isSelected ? 'bg-emerald-500' : 'bg-slate-100'}`}>
+                                <Icon className={`h-5 w-5 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className={`font-semibold mb-1 ${isSelected ? 'text-emerald-800' : 'text-slate-800'}`}>
+                                  {personality.name}
+                                </h3>
+                                <p className={`text-sm ${isSelected ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                  {personality.description}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Tom */}
+                <div className="space-y-4">
+                  <Label className="text-lg font-semibold text-slate-700">Tom de Voz *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {TONE_OPTIONS.map((tone) => (
+                      <Card
+                        key={tone.id}
+                        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                          formData.tom === tone.id
+                            ? 'border-2 border-teal-500 bg-teal-50 shadow-lg'
+                            : 'border-2 border-slate-200 hover:border-teal-300'
+                        }`}
+                        onClick={() => setFormData(prev => ({ ...prev, tom: tone.id as AvatarData['tom'] }))}
+                      >
+                        <CardContent className="p-4">
+                          <h3 className={`font-semibold mb-1 ${formData.tom === tone.id ? 'text-teal-800' : 'text-slate-800'}`}>
+                            {tone.name}
+                          </h3>
+                          <p className={`text-sm ${formData.tom === tone.id ? 'text-teal-600' : 'text-slate-600'}`}>
+                            {tone.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Background */}
+                <div className="space-y-2">
+                  <Label htmlFor="background" className="text-lg font-semibold text-slate-700">
+                    História/Background
+                  </Label>
+                  <Textarea
+                    id="background"
+                    value={formData.background}
+                    onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
+                    placeholder="Conte um pouco sobre a história e contexto deste avatar..."
+                    className="min-h-[100px] border-2 border-slate-200 focus:border-emerald-500 rounded-xl p-4"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Interests */}
+                <div className="space-y-2">
+                  <Label htmlFor="interests" className="text-lg font-semibold text-slate-700">
+                    Interesses e Especialidades
+                  </Label>
+                  <Textarea
+                    id="interests"
+                    value={formData.interests}
+                    onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
+                    placeholder="Liste os principais interesses, hobbies e áreas de especialidade..."
+                    className="min-h-[100px] border-2 border-slate-200 focus:border-emerald-500 rounded-xl p-4"
+                    rows={4}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <Button
+                    type="button"
+                    onClick={resetForm}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-300 hover:border-slate-400 rounded-xl h-12 text-lg font-semibold"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading || !formData.nome || !formData.personalidade || !formData.tom}
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] h-12 text-lg font-semibold"
+                  >
+                    {isLoading ? 'Salvando...' : editingAvatar ? 'Salvar Alterações' : 'Criar Avatar'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container-safe">
+      {/* Header */}
+      <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  Seus Avatares
+                </h1>
+                <p className="text-sm text-slate-300">Personalize seus companheiros de IA</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
               <Button
                 onClick={() => navigate('/chat')}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 px-3 sm:px-8 py-2 sm:py-3 font-semibold text-sm sm:text-base"
+                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
               >
-                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <MessageCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">Chat</span>
               </Button>
               <Button
-                onClick={handleLogout}
-                className="bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 px-3 sm:px-6 py-2 sm:py-3 font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
+                onClick={() => navigate('/settings')}
+                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
               >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Configurações</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Sistema de Abas */}
-        <div className="mb-12 personalize-tabs-container">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 bg-slate-800/50 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur-sm">
-            <button
-              onClick={() => setActiveTab('create')}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
-                activeTab === 'create'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <Plus className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap">Criar Avatar</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('system')}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
-                activeTab === 'system'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <Settings className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap text-center">Avatares do Sistema</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('my-avatars')}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 min-h-[3.5rem] text-xs sm:text-base ${
-                activeTab === 'my-avatars'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <MessageCircle className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap">Meus Avatares ({avatares.length})</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Conteúdo das Abas */}
-        {activeTab === 'create' && (
-          <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden max-w-4xl mx-auto personalize-form">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8">
-              <CardTitle className="flex items-center space-x-3 sm:space-x-4 text-slate-100">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
-                  {editingAvatar ? <Edit2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" /> : <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
-                </div>
-                <div className="min-w-0">
-                  <span className="text-lg sm:text-2xl font-bold">{editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}</span>
-                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal">
-                    {editingAvatar ? 'Atualize as informações do seu avatar' : 'Configure seu novo assistente virtual'}
-                  </p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-8 space-y-6 sm:space-y-8">
-              <div className="space-y-3 personalize-field">
-                <Label htmlFor="nome" className="text-slate-200 font-semibold text-sm sm:text-base">Nome do Avatar</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                  placeholder="Ex: Ana, Carlos, Sofia..."
-                  className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md"
-                />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* System Avatars Section */}
+        {systemAvatars.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">Avatares Disponíveis</h2>
+                <p className="text-slate-300">Escolha entre nossos avatares pré-configurados</p>
               </div>
+            </div>
 
-              <div className="space-y-3 personalize-field">
-                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Avatar Visual</Label>
-                
-                {/* Seletor de tipo de avatar */}
-                <div className="flex space-x-2 mb-4 avatar-type-selector">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAvatarType('emoji');
-                      setUploadedImage(null);
-                      if (!AVATAR_OPTIONS.includes(formData.avatar)) {
-                        setFormData(prev => ({ ...prev, avatar: '😀', avatarType: 'emoji' }));
-                      }
-                    }}
-                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 text-sm sm:text-base ${
-                      avatarType === 'emoji'
-                        ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-                        : 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
-                    }`}
-                  >
-                    <span className="text-lg">😀</span>
-                    <span>Emoji</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAvatarType('image')}
-                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 text-sm sm:text-base ${
-                      avatarType === 'image'
-                        ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
-                        : 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
-                    }`}
-                  >
-                    <Image className="h-4 w-4" />
-                    <span>Imagem</span>
-                  </button>
-                </div>
-
-                {/* Grid de emojis */}
-                {avatarType === 'emoji' && (
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 mt-3 p-3 sm:p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner emoji-grid">
-                    {AVATAR_OPTIONS.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, avatar: option, avatarType: 'emoji' }))}
-                        className={`p-2 sm:p-3 text-2xl sm:text-3xl rounded-xl border-2 transition-all duration-300 hover:scale-110 transform shadow-sm ${
-                          formData.avatar === option && avatarType === 'emoji'
-                            ? 'border-emerald-500 bg-gradient-to-br from-emerald-500 to-teal-600 shadow-xl ring-4 ring-emerald-300/50 scale-105' 
-                            : 'border-slate-500 hover:border-emerald-400 bg-slate-600 hover:bg-gradient-to-br hover:from-emerald-600/20 hover:to-teal-600/20 hover:shadow-lg'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Upload de imagem */}
-                {avatarType === 'image' && (
-                  <div className="mt-3 p-3 sm:p-6 border-2 border-slate-600 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 shadow-inner image-upload-area">
-                    <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                      {uploadedImage ? (
-                        <div className="relative">
-                          <img
-                            src={uploadedImage}
-                            alt="Avatar personalizado"
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-emerald-500 shadow-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setUploadedImage(null);
-                              setFormData(prev => ({ ...prev, avatar: '' }));
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 border-2 border-dashed border-slate-500 rounded-full flex items-center justify-center">
-                          <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
-                        </div>
-                      )}
-                      
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              const result = event.target?.result as string;
-                              setUploadedImage(result);
-                              setFormData(prev => ({ ...prev, avatar: result, avatarType: 'image' }));
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="hidden"
-                        id="avatar-upload"
-                      />
-                      
-                      <label
-                        htmlFor="avatar-upload"
-                        className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm sm:text-base"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{uploadedImage ? 'Trocar Imagem' : 'Carregar Imagem'}</span>
-                      </label>
-                      
-                      <p className="text-xs text-slate-400 text-center">
-                        Formatos aceitos: JPG, PNG, GIF<br />
-                        Tamanho máximo: 5MB
-                      </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {systemAvatars.map((avatar) => (
+                <Card key={avatar.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center space-x-4">
+                      {renderAvatar(avatar)}
+                      <div className="flex-1">
+                        <CardTitle className="text-xl text-slate-800">{avatar.nome}</CardTitle>
+                        <CardDescription className="text-sm font-medium text-slate-600">
+                          {avatar.profissao}
+                        </CardDescription>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3 personalize-field">
-                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Personalidade</Label>
-                <Select 
-                  value={formData.personalidade} 
-                  onValueChange={(value: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist') => 
-                    setFormData(prev => ({ ...prev, personalidade: value }))
-                  }
-                >
-                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-12 sm:h-14 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
-                    <SelectValue placeholder="Escolha a personalidade" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md personalize-dropdown">
-                    {PERSONALITY_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value} className="p-2 sm:p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
-                        <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-xs sm:text-sm truncate">{type.label}</span>
-                          <span className="text-xs text-slate-300 leading-tight line-clamp-2">{type.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3 personalize-field">
-                <Label className="text-slate-200 font-semibold text-sm sm:text-base">Tom de Voz</Label>
-                <Select 
-                  value={formData.tom} 
-                  onValueChange={(value: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise') => 
-                    setFormData(prev => ({ ...prev, tom: value }))
-                  }
-                >
-                  <SelectTrigger className="mt-2 border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-12 sm:h-14 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
-                    <SelectValue placeholder="Escolha o tom de voz" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 max-w-md personalize-dropdown">
-                    {TONE_OPTIONS.map((tone) => (
-                      <SelectItem key={tone.value} value={tone.value} className="p-2 sm:p-3 hover:bg-emerald-600/20 focus:bg-emerald-600/20 cursor-pointer text-slate-100 overflow-hidden">
-                        <div className="flex flex-col space-y-1 w-full overflow-hidden">
-                          <span className="font-semibold text-slate-100 text-xs sm:text-sm truncate">{tone.label}</span>
-                          <span className="text-xs text-slate-300 leading-tight line-clamp-2">{tone.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3 personalize-field">
-                <Label htmlFor="background" className="text-slate-200 font-semibold text-sm sm:text-base">História/Background</Label>
-                <Textarea
-                  id="background"
-                  value={formData.background}
-                  onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
-                  placeholder="Conte a história do seu avatar, sua formação, experiências..."
-                  className="mt-2 min-h-[100px] sm:min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-3 sm:p-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
-                />
-              </div>
-
-              <div className="space-y-3 personalize-field">
-                <Label htmlFor="interests" className="text-slate-200 font-semibold text-sm sm:text-base">Interesses e Especialidades</Label>
-                <Textarea
-                  id="interests"
-                  value={formData.interests}
-                  onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
-                  placeholder="Quais são os interesses, hobbies ou especialidades do avatar?"
-                  className="mt-2 min-h-[100px] sm:min-h-[120px] border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 placeholder:text-slate-400 p-3 sm:p-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md resize-none"
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 sm:pt-8 button-container-safe">
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={isLoading || !formData.nome.trim()}
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-12 sm:h-14 text-sm sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Salvando...</span>
-                    </div>
-                  ) : (
-                    editingAvatar ? 'Atualizar Avatar' : 'Criar Avatar'
-                  )}
-                </Button>
-                {editingAvatar && (
-                  <Button
-                    onClick={cancelEdit}
-                    className="px-6 sm:px-8 bg-slate-700 hover:bg-slate-600 text-slate-200 border-2 border-slate-600 hover:border-slate-500 rounded-xl transition-all duration-300 h-12 sm:h-14 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Avatares do Sistema */}
-        {activeTab === 'system' && (
-          <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8 personalize-header">
-              <CardTitle className="text-slate-100 flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-lg sm:text-2xl font-bold truncate">Avatares do Sistema</span>
-                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal hidden sm:block">Escolha entre nossos avatares pré-criados</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-8">
-              {/* Filtro por Categoria */}
-              <div className="mb-4 sm:mb-6 personalize-field">
-                <Label className="text-slate-200 font-semibold text-sm sm:text-base mb-2 sm:mb-3 block">Filtrar por Categoria:</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-full border-2 border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl bg-slate-700 text-slate-100 h-10 sm:h-12 px-3 sm:px-4 text-sm sm:text-base transition-all duration-200 shadow-sm hover:shadow-md">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-2 border-slate-600 shadow-xl bg-slate-700 personalize-dropdown">
-                    <SelectItem key="all" value="all" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Todas as Categorias</SelectItem>
-                    <SelectItem key="musica" value="musica" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Música</SelectItem>
-                    <SelectItem key="entretenimento" value="entretenimento" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Entretenimento</SelectItem>
-                    <SelectItem key="esportes" value="esportes" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Esportes</SelectItem>
-                    <SelectItem key="profissional" value="profissional" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Profissional</SelectItem>
-                    <SelectItem key="tecnologia" value="tecnologia" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Tecnologia</SelectItem>
-                    <SelectItem key="arte" value="arte" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Arte</SelectItem>
-                    <SelectItem key="outros" value="outros" className="text-slate-100 hover:bg-emerald-600/20 focus:bg-emerald-600/20 p-2 sm:p-3 text-xs sm:text-sm">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Grid de Avatares do Sistema */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 max-h-[500px] sm:max-h-[600px] overflow-y-auto pr-1 sm:pr-2 system-avatars-grid">
-                {systemAvatars
-                  .filter(avatar => selectedCategory === 'all' || avatar.categoria === selectedCategory)
-                  .map((avatar) => (
-                    <div key={avatar.id} className="p-3 sm:p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02] system-avatar-card">
-                      <div className="text-center mb-3 sm:mb-4">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3">
-                          {avatar.avatarType === 'image' ? (
-                            <img 
-                              src={avatar.avatar} 
-                              alt={avatar.nome}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div 
-                            className={`w-full h-full rounded-full flex items-center justify-center text-2xl sm:text-4xl ${
-                              avatar.avatarType === 'image' ? 'hidden' : 'flex'
-                            }`}
-                          >
-                            {avatar.avatarType === 'image' ? '🎨' : avatar.avatar}
-                          </div>
-                        </div>
-                        <h3 className="font-bold text-base sm:text-xl text-slate-100 mb-1 sm:mb-2">{avatar.nome}</h3>
-                        <p className="text-xs sm:text-sm text-emerald-400 font-medium mb-1 sm:mb-2">{avatar.profissao}</p>
-                        <Badge className="text-xs bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border-slate-300 px-2 py-1 rounded-lg font-medium">
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                           {avatar.categoria}
+                        </Badge>
+                        <Badge className="bg-teal-100 text-teal-700 border-teal-200">
+                          {avatar.personalidade}
                         </Badge>
                       </div>
                       
-                      <div className="space-y-1 sm:space-y-2 text-xs text-slate-300 mb-3 sm:mb-4">
-                        <p><span className="font-semibold text-slate-200">Personalidade:</span> {PERSONALITY_TYPES.find(p => p.value === avatar.personalidade)?.label}</p>
-                         <p><span className="font-semibold text-slate-200">Tom:</span> {TONE_OPTIONS.find(t => t.value === avatar.tom)?.label}</p>
-                        <p><span className="font-semibold text-slate-200">Características:</span> {avatar.caracteristicas}</p>
-                        {avatar.inspiracao && (
-                          <p><span className="font-semibold text-slate-200">Inspiração:</span> {avatar.inspiracao}</p>
-                        )}
-                      </div>
+                      <p className="text-sm text-slate-600 line-clamp-3">
+                        {avatar.caracteristicas}
+                      </p>
                       
                       <Button
-                        onClick={() => addSystemAvatar(avatar)}
-                        disabled={isLoading}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] h-10 sm:h-12 text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        onClick={() => handleSystemAvatarSelect(avatar)}
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
                       >
-                        {isLoading ? 'Adicionando...' : 'Adicionar Avatar'}
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar aos Meus Avatares
                       </Button>
                     </div>
-                  ))
-                }
-              </div>
-              
-              {systemAvatars.filter(avatar => selectedCategory === 'all' || avatar.categoria === selectedCategory).length === 0 && (
-                <p className="text-slate-400 text-center py-6 sm:py-8 text-sm sm:text-base">Nenhum avatar encontrado para esta categoria.</p>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Lista de Avatares do Usuário */}
-        {activeTab === 'my-avatars' && (
-          <Card className="shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-slate-700/50 via-slate-800 to-emerald-900/30 border-b border-slate-700 p-4 sm:p-8 personalize-header">
-              <CardTitle className="text-slate-100 flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-2 sm:p-3 rounded-xl shadow-lg flex-shrink-0">
-                  <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-lg sm:text-2xl font-bold">Meus Avatares ({avatares.length})</span>
-                  <p className="text-slate-300 text-xs sm:text-sm mt-1 font-normal hidden sm:block">Gerencie seus assistentes virtuais</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-8">
-              {avatares.length === 0 ? (
-                <div className="text-center py-8 sm:py-16 empty-state">
-                  <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 p-4 sm:p-6 rounded-2xl w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-6 sm:mb-8 flex items-center justify-center shadow-xl">
-                    <Plus className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
-                  </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-100 mb-3 sm:mb-4">Nenhum avatar criado</h3>
-                  <p className="text-slate-300 text-sm sm:text-lg leading-relaxed max-w-md mx-auto px-4">
-                    Crie seu primeiro avatar para começar a conversar!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 sm:space-y-6 max-h-[500px] sm:max-h-[700px] overflow-y-auto pr-1 sm:pr-2 user-avatars-grid">
-                  {avatares.map((avatar) => (
-                    <div
-                      key={avatar.id}
-                      className="p-4 sm:p-6 border-2 border-slate-600 rounded-2xl hover:shadow-xl transition-all duration-300 bg-slate-700/50 hover:border-emerald-400 transform hover:scale-[1.02] user-avatar-card"
-                    >
-                      <div className="flex flex-col sm:flex-row items-start justify-between space-y-3 sm:space-y-0">
-                        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 w-full">
-                          <div className="bg-gradient-to-br from-slate-600 to-slate-700 p-2 sm:p-3 rounded-xl shadow-sm w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center flex-shrink-0">
-                            {avatar.avatarType === 'image' || (!AVATAR_OPTIONS.includes(avatar.avatar) && avatar.avatar.startsWith('data:')) ? (
-                              <img 
-                                src={avatar.avatar} 
-                                alt={avatar.nome}
-                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <span className="text-2xl sm:text-4xl">{avatar.avatar}</span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-lg sm:text-xl text-slate-100 mb-2 sm:mb-3">{avatar.nome}</h3>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                              <Badge className="text-xs sm:text-sm bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 border-emerald-300 px-2 sm:px-3 py-1 rounded-lg font-medium">
-                                {PERSONALITY_TYPES.find(p => p.value === avatar.personalidade)?.label}
-                              </Badge>
-                              <Badge className="text-xs sm:text-sm bg-gradient-to-r from-teal-100 to-teal-200 text-teal-700 border-teal-300 px-2 sm:px-3 py-1 rounded-lg font-medium">
-                                {TONE_OPTIONS.find(t => t.value === avatar.tom)?.label}
-                              </Badge>
-                            </div>
-                            {avatar.background && (
-                              <p className="text-xs sm:text-sm text-slate-300 mt-2 sm:mt-3 line-clamp-2 leading-relaxed">{avatar.background}</p>
-                            )}
-                            {avatar.interests && (
-                              <p className="text-xs sm:text-sm text-emerald-400 mt-2 sm:mt-3 leading-relaxed">
-                                <span className="font-semibold">Interesses:</span> {avatar.interests}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex space-x-2 sm:space-x-3 ml-0 sm:ml-4 w-full sm:w-auto justify-end">
-                          <Button
-                            onClick={() => editAvatar(avatar)}
-                            className="p-2 sm:p-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 border-2 border-emerald-300 hover:border-emerald-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
-                          >
-                            <Edit2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                          </Button>
-                          <Button
-                            onClick={() => deleteAvatar(avatar.id!)}
-                            className="p-2 sm:p-3 bg-red-100 hover:bg-red-200 text-red-700 border-2 border-red-300 hover:border-red-400 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
-                          >
-                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                          </Button>
+        {/* Personal Avatars Section */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-2">Meus Avatares</h2>
+            <p className="text-slate-300">Gerencie seus avatares personalizados</p>
+          </div>
+          <Button
+            onClick={() => setShowCreateForm(true)}
+            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-6 py-3"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Criar Avatar
+          </Button>
+        </div>
+
+        {avatares.length === 0 ? (
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 rounded-full mb-6">
+                <User className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-800 mb-3">Nenhum avatar criado ainda</h3>
+              <p className="text-slate-600 text-center mb-8 max-w-md">
+                Crie seu primeiro avatar personalizado para começar conversas incríveis com IA!
+              </p>
+              <Button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-8 py-3"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Criar Meu Primeiro Avatar
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {avatares.map((avatar) => {
+              const personality = PERSONALITY_TYPES.find(p => p.id === avatar.personalidade);
+              const tone = TONE_OPTIONS.find(t => t.id === avatar.tom);
+              
+              return (
+                <Card key={avatar.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {renderAvatar(avatar)}
+                        <div>
+                          <CardTitle className="text-xl text-slate-800">{avatar.nome}</CardTitle>
+                          <CardDescription className="text-sm font-medium">
+                            {personality?.name} • {tone?.name}
+                          </CardDescription>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                          {personality?.name}
+                        </Badge>
+                        <Badge className="bg-teal-100 text-teal-700 border-teal-200">
+                          {tone?.name}
+                        </Badge>
+                      </div>
+                      
+                      {avatar.background && (
+                        <p className="text-sm text-slate-600 line-clamp-2">
+                          {avatar.background}
+                        </p>
+                      )}
+                      
+                      {avatar.interests && (
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          <strong>Interesses:</strong> {avatar.interests}
+                        </p>
+                      )}
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleEdit(avatar)}
+                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 hover:border-slate-300 rounded-lg transition-all duration-200"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          onClick={() => handleDelete(avatar.id)}
+                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-200 hover:border-red-300 rounded-lg transition-all duration-200"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

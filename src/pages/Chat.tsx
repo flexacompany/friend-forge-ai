@@ -151,7 +151,7 @@ const Chat = () => {
         personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
         tom: avatar.tom as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
         avatar: avatar.avatar,
-        avatarType: avatar.avatar_type as 'emoji' | 'image' || 'emoji',
+        avatarType: (avatar as any).avatar_type as 'emoji' | 'image' || 'emoji',
         background: avatar.background,
         interests: avatar.interests
       }));
@@ -327,7 +327,7 @@ const Chat = () => {
               <Button
                 onClick={() => {
                   setShowNotifications(true);
-                  markAllAsViewed(); // Zerar contador quando abrir notificações
+                  markAllAsViewed();
                 }}
                 className="relative bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-2 sm:px-4"
               >
