@@ -198,23 +198,18 @@ const Personalize = () => {
       return;
     }
 
-    // Type guards to ensure we have valid values
-    const isValidPersonality = (value: string): value is AvatarData['personalidade'] => {
-      return ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'].includes(value);
-    };
+    // More explicit type guards with explicit type assertions
+    const personalidade = formData.personalidade as AvatarData['personalidade'];
+    const tom = formData.tom as AvatarData['tom'];
 
-    const isValidTone = (value: string): value is AvatarData['tom'] => {
-      return ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'].includes(value);
-    };
+    // Validate that we have valid enum values
+    const validPersonalities: AvatarData['personalidade'][] = ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'];
+    const validTones: AvatarData['tom'][] = ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'];
 
-    if (!isValidPersonality(formData.personalidade) || !isValidTone(formData.tom)) {
+    if (!validPersonalities.includes(personalidade) || !validTones.includes(tom)) {
       toast.error('Valores de personalidade ou tom inválidos');
       return;
     }
-
-    // Now TypeScript knows these are valid types
-    const validPersonality = formData.personalidade;
-    const validTone = formData.tom;
 
     setIsLoading(true);
     
@@ -232,8 +227,8 @@ const Personalize = () => {
           .from('avatares')
           .update({
             nome: formData.nome,
-            personalidade: validPersonality,
-            tom: validTone,
+            personalidade: personalidade,
+            tom: tom,
             avatar: formData.avatar,
             background: formData.background || null,
             interests: formData.interests || null
@@ -249,8 +244,8 @@ const Personalize = () => {
           .insert({
             user_id: user.id,
             nome: formData.nome,
-            personalidade: validPersonality,
-            tom: validTone,
+            personalidade: personalidade,
+            tom: tom,
             avatar: formData.avatar,
             background: formData.background || null,
             interests: formData.interests || null
