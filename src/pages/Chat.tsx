@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,15 +20,24 @@ interface AvatarData {
   personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
   tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
   avatar: string;
-  avatarType: 'emoji' | 'image';
+  avatar_type: 'emoji' | 'image';
   background: string | null;
   interests: string | null;
 }
 
 interface Message {
   id: string;
-  conteudo: string;
+  content: string;
   is_user: boolean;
+  created_at: string;
+}
+
+interface Conversation {
+  id: string;
+  user_id: string;
+  avatar_id: string;
+  title: string | null;
+  last_activity: string;
   created_at: string;
 }
 
@@ -53,6 +63,7 @@ const Chat = () => {
   const [avatares, setAvatares] = useState<AvatarData[]>([]);
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>('');
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarData | null>(null);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +76,7 @@ const Chat = () => {
   const renderAvatar = (avatar: AvatarData) => {
     return (
       <Avatar className="h-6 w-6 flex-shrink-0">
-        {avatar.avatarType === 'image' ? (
+        {avatar.avatar_type === 'image' ? (
           <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
         ) : (
           <AvatarFallback className="text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -79,7 +90,7 @@ const Chat = () => {
   const renderAvatarInSelect = (avatar: AvatarData) => {
     return (
       <Avatar className="h-5 w-5 flex-shrink-0">
-        {avatar.avatarType === 'image' ? (
+        {avatar.avatar_type === 'image' ? (
           <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
         ) : (
           <AvatarFallback className="text-xs bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -99,12 +110,12 @@ const Chat = () => {
     }
   }, [navigate]);
 
-  const loadMessages = useCallback(async (avatarId: string) => {
+  const loadMessages = useCallback(async (conversationId: string) => {
     try {
       const { data, error } = await supabase
-        .from('mensagens')
+        .from('messages')
         .select('*')
-        .eq('avatar_id', avatarId)
+        .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -115,6 +126,48 @@ const Chat = () => {
     }
   }, []);
 
+  const findOrCreateConversation = async (avatarId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Procurar conversa existente
+      let { data: existingConversation, error: findError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('avatar_id', avatarId)
+        .single();
+
+      if (findError && findError.code !== 'PGRST116') {
+        throw findError;
+      }
+
+      // Se não encontrar, criar nova conversa
+      if (!existingConversation) {
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: user.id,
+            avatar_id: avatarId,
+            title: null
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        existingConversation = newConversation;
+      }
+
+      setCurrentConversation(existingConversation);
+      return existingConversation;
+    } catch (error) {
+      console.error('Erro ao encontrar/criar conversa:', error);
+      toast.error('Erro ao inicializar conversa');
+      return null;
+    }
+  };
+
   useEffect(() => {
     checkAuth();
     loadAvatares();
@@ -124,7 +177,14 @@ const Chat = () => {
     if (selectedAvatarId) {
       const avatar = avatares.find(a => a.id === selectedAvatarId);
       setSelectedAvatar(avatar || null);
-      loadMessages(selectedAvatarId);
+      
+      if (avatar) {
+        findOrCreateConversation(selectedAvatarId).then(conversation => {
+          if (conversation) {
+            loadMessages(conversation.id);
+          }
+        });
+      }
     }
   }, [selectedAvatarId, avatares, loadMessages]);
 
@@ -151,7 +211,7 @@ const Chat = () => {
         personalidade: avatar.personalidade as 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist',
         tom: avatar.tom as 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise',
         avatar: avatar.avatar,
-        avatarType: (avatar as any).avatar_type as 'emoji' | 'image' || 'emoji',
+        avatar_type: avatar.avatar_type as 'emoji' | 'image',
         background: avatar.background,
         interests: avatar.interests
       }));
@@ -168,7 +228,7 @@ const Chat = () => {
   };
 
   const clearChat = async () => {
-    if (!selectedAvatarId) return;
+    if (!currentConversation) return;
     
     if (!confirm('Tem certeza que deseja limpar todo o histórico desta conversa?')) {
       return;
@@ -176,9 +236,9 @@ const Chat = () => {
 
     try {
       const { error } = await supabase
-        .from('mensagens')
+        .from('messages')
         .delete()
-        .eq('avatar_id', selectedAvatarId);
+        .eq('conversation_id', currentConversation.id);
 
       if (error) throw error;
       setMessages([]);
@@ -195,7 +255,7 @@ const Chat = () => {
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !selectedAvatar || !selectedAvatarId) return;
+    if (!inputMessage.trim() || !selectedAvatar || !currentConversation) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -208,11 +268,10 @@ const Chat = () => {
     try {
       // Salvar mensagem do usuário
       const { error: userMessageError } = await supabase
-        .from('mensagens')
+        .from('messages')
         .insert({
-          user_id: user.id,
-          avatar_id: selectedAvatarId,
-          conteudo: inputMessage,
+          conversation_id: currentConversation.id,
+          content: inputMessage,
           is_user: true
         });
 
@@ -221,7 +280,7 @@ const Chat = () => {
       // Adicionar mensagem à interface imediatamente
       const tempUserMessage: Message = {
         id: `temp-${Date.now()}`,
-        conteudo: inputMessage,
+        content: inputMessage,
         is_user: true,
         created_at: new Date().toISOString()
       };
@@ -250,18 +309,17 @@ const Chat = () => {
 
       // Salvar resposta do bot
       const { error: botMessageError } = await supabase
-        .from('mensagens')
+        .from('messages')
         .insert({
-          user_id: user.id,
-          avatar_id: selectedAvatarId,
-          conteudo: data.response,
+          conversation_id: currentConversation.id,
+          content: data.response,
           is_user: false
         });
 
       if (botMessageError) throw botMessageError;
 
       // Recarregar mensagens para sincronizar com o banco
-      loadMessages(selectedAvatarId);
+      loadMessages(currentConversation.id);
 
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
@@ -432,7 +490,7 @@ const Chat = () => {
             {selectedAvatar && (
               <div className="flex items-center space-x-2 md:space-x-3">
                 <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
-                  {selectedAvatar.avatarType === 'image' ? (
+                  {selectedAvatar.avatar_type === 'image' ? (
                     <AvatarImage src={selectedAvatar.avatar} alt={selectedAvatar.nome} className="object-cover" />
                   ) : (
                     <AvatarFallback className="text-sm md:text-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -496,7 +554,7 @@ const Chat = () => {
                   )}
                   <div className={`whitespace-pre-wrap text-sm md:text-base leading-relaxed ${
                     message.is_user ? 'text-white' : 'text-slate-800'
-                  }`}>{message.conteudo}</div>
+                  }`}>{message.content}</div>
                   <div className={`text-xs mt-2 opacity-70 ${
                     message.is_user ? 'text-emerald-100' : 'text-slate-500'
                   }`}>
