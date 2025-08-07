@@ -212,6 +212,10 @@ const Personalize = () => {
       return;
     }
 
+    // Now TypeScript knows these are valid types
+    const validPersonality = formData.personalidade;
+    const validTone = formData.tom;
+
     setIsLoading(true);
     
     const { data: { user } } = await supabase.auth.getUser();
@@ -228,8 +232,8 @@ const Personalize = () => {
           .from('avatares')
           .update({
             nome: formData.nome,
-            personalidade: formData.personalidade,
-            tom: formData.tom,
+            personalidade: validPersonality,
+            tom: validTone,
             avatar: formData.avatar,
             background: formData.background || null,
             interests: formData.interests || null
@@ -245,8 +249,8 @@ const Personalize = () => {
           .insert({
             user_id: user.id,
             nome: formData.nome,
-            personalidade: formData.personalidade,
-            tom: formData.tom,
+            personalidade: validPersonality,
+            tom: validTone,
             avatar: formData.avatar,
             background: formData.background || null,
             interests: formData.interests || null
