@@ -55,6 +55,16 @@ interface SystemAvatarData {
   inspiracao: string;
 }
 
+interface FormData {
+  nome: string;
+  personalidade: AvatarData['personalidade'] | '';
+  tom: AvatarData['tom'] | '';
+  avatar: string;
+  avatarType: 'emoji' | 'image';
+  background: string;
+  interests: string;
+}
+
 const PERSONALITY_TYPES = [
   { id: 'friend', name: 'Amigo', icon: Heart, description: 'Casual, próximo e sempre disponível para uma conversa' },
   { id: 'consultant', name: 'Consultor', icon: Briefcase, description: 'Profissional e estratégico, oferece insights práticos' },
@@ -62,7 +72,7 @@ const PERSONALITY_TYPES = [
   { id: 'mentor', name: 'Mentor', icon: BookOpen, description: 'Sábio e orientador para desenvolvimento pessoal' },
   { id: 'coach', name: 'Coach', icon: Target, description: 'Focado em resultados e superação de desafios' },
   { id: 'therapist', name: 'Terapeuta', icon: Brain, description: 'Empático e compreensivo, oferece suporte emocional' }
-];
+] as const;
 
 const TONE_OPTIONS = [
   { id: 'friendly', name: 'Amigável', description: 'Caloroso e próximo' },
@@ -71,7 +81,7 @@ const TONE_OPTIONS = [
   { id: 'empathetic', name: 'Empático', description: 'Compreensivo e acolhedor' },
   { id: 'witty', name: 'Espirituoso', description: 'Inteligente com humor sutil' },
   { id: 'wise', name: 'Sábio', description: 'Reflexivo e profundo' }
-];
+] as const;
 
 const DEFAULT_EMOJIS = ['🤖', '👨‍💼', '👩‍💼', '🧑‍🏫', '👨‍🔬', '👩‍🔬', '🧑‍💻', '👨‍⚕️', '👩‍⚕️', '🧑‍🎨'];
 
@@ -115,12 +125,12 @@ const Personalize = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nome: '',
-    personalidade: '' as AvatarData['personalidade'],
-    tom: '' as AvatarData['tom'],
+    personalidade: '',
+    tom: '',
     avatar: '🤖',
-    avatarType: 'emoji' as 'emoji' | 'image',
+    avatarType: 'emoji',
     background: '',
     interests: ''
   });
@@ -309,8 +319,8 @@ const Personalize = () => {
   const resetForm = () => {
     setFormData({
       nome: '',
-      personalidade: '' as AvatarData['personalidade'],
-      tom: '' as AvatarData['tom'],
+      personalidade: '',
+      tom: '',
       avatar: '🤖',
       avatarType: 'emoji',
       background: '',
@@ -337,6 +347,26 @@ const Personalize = () => {
         }));
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePersonalityChange = (personalityId: string) => {
+    const personality = PERSONALITY_TYPES.find(p => p.id === personalityId);
+    if (personality) {
+      setFormData(prev => ({ 
+        ...prev, 
+        personalidade: personality.id as AvatarData['personalidade'] 
+      }));
+    }
+  };
+
+  const handleToneChange = (toneId: string) => {
+    const tone = TONE_OPTIONS.find(t => t.id === toneId);
+    if (tone) {
+      setFormData(prev => ({ 
+        ...prev, 
+        tom: tone.id as AvatarData['tom'] 
+      }));
     }
   };
 
@@ -483,7 +513,7 @@ const Personalize = () => {
                               ? 'border-2 border-emerald-500 bg-emerald-50 shadow-lg' 
                               : 'border-2 border-slate-200 hover:border-emerald-300'
                           }`}
-                          onClick={() => setFormData(prev => ({ ...prev, personalidade: personality.id as AvatarData['personalidade'] }))}
+                          onClick={() => handlePersonalityChange(personality.id)}
                         >
                           <CardContent className="p-4">
                             <div className="flex items-start space-x-3">
@@ -518,7 +548,7 @@ const Personalize = () => {
                             ? 'border-2 border-teal-500 bg-teal-50 shadow-lg'
                             : 'border-2 border-slate-200 hover:border-teal-300'
                         }`}
-                        onClick={() => setFormData(prev => ({ ...prev, tom: tone.id as AvatarData['tom'] }))}
+                        onClick={() => handleToneChange(tone.id)}
                       >
                         <CardContent className="p-4">
                           <h3 className={`font-semibold mb-1 ${formData.tom === tone.id ? 'text-teal-800' : 'text-slate-800'}`}>
