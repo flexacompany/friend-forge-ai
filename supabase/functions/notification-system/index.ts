@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -16,7 +17,7 @@ interface InactiveConversation {
   last_message_at: string;
 }
 
-interface ReengagementMessage {
+interface ReengagementTemplate {
   message_template: string;
 }
 
@@ -36,8 +37,21 @@ serve(async (req) => {
     console.log('🔍 Verificando conversas inativas...');
 
     // Buscar conversas inativas (mais de 24 horas sem mensagem)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
     const { data: inactiveConversations, error: fetchError } = await supabaseClient
-      .rpc('get_inactive_conversations')
+      .from('conversation_activity')
+      .select(`
+        conversation_id,
+        last_message_at,
+        conversations!inner(
+          user_id,
+          avatar_id,
+          avatares!inner(nome, personalidade, tom, categoria)
+        )
+      `)
+      .lt('last_message_at', twentyFourHoursAgo)
+      .eq('notification_sent', false);
 
     if (fetchError) {
       console.error('❌ Erro ao buscar conversas inativas:', fetchError)
@@ -64,88 +78,87 @@ serve(async (req) => {
     const errors: string[] = [];
 
     // Processar cada conversa inativa
-    for (const conversation of inactiveConversations as InactiveConversation[]) {
+    for (const activity of inactiveConversations as any[]) {
       try {
-        console.log(`💬 Processando conversa: ${conversation.avatar_nome} (${conversation.avatar_id})`);
+        const conversation = activity.conversations;
+        const avatar = conversation.avatares;
+        
+        console.log(`💬 Processando conversa: ${avatar.nome} (${conversation.avatar_id})`);
 
         // Buscar template de mensagem apropriado
-        const { data: messageTemplates, error: templateError } = await supabaseClient
-          .from('reengagement_messages')
+        let { data: messageTemplates, error: templateError } = await supabaseClient
+          .from('reengagement_templates')
           .select('message_template')
-          .eq('personalidade', conversation.personalidade)
-          .eq('tom', conversation.tom)
-          .eq('categoria', conversation.categoria)
-          .limit(1)
+          .eq('personalidade', avatar.personalidade)
+          .eq('tom', avatar.tom)
+          .eq('categoria', avatar.categoria)
+          .limit(1);
         
-        let finalMessageTemplates = messageTemplates
-
         // Se não encontrar template específico da categoria, buscar template geral
-        if (!finalMessageTemplates || finalMessageTemplates.length === 0) {
+        if (!messageTemplates || messageTemplates.length === 0) {
           const { data: generalTemplates, error: generalError } = await supabaseClient
-            .from('reengagement_messages')
+            .from('reengagement_templates')
             .select('message_template')
-            .eq('personalidade', conversation.personalidade)
-            .eq('tom', conversation.tom)
-            .eq('categoria', 'geral')
-            .limit(1)
+            .eq('personalidade', avatar.personalidade)
+            .eq('tom', avatar.tom)
+            .is('categoria', null)
+            .limit(1);
 
           if (generalError) {
-            console.error('❌ Erro ao buscar template geral:', generalError)
-            throw generalError
+            console.error('❌ Erro ao buscar template geral:', generalError);
+            throw generalError;
           }
 
-          finalMessageTemplates = generalTemplates
+          messageTemplates = generalTemplates;
         }
 
         if (templateError) {
-          console.error('❌ Erro ao buscar template:', templateError)
-          throw templateError
+          console.error('❌ Erro ao buscar template:', templateError);
+          throw templateError;
         }
 
-        if (!finalMessageTemplates || finalMessageTemplates.length === 0) {
+        if (!messageTemplates || messageTemplates.length === 0) {
           // Template padrão como fallback
-          finalMessageTemplates = [{
+          messageTemplates = [{
             message_template: 'Oi! Senti sua falta por aqui! Como você está? 😊'
-          }]
+          }];
         }
 
-        const messageTemplate = finalMessageTemplates[0] as ReengagementMessage;
+        const messageTemplate = messageTemplates[0] as ReengagementTemplate;
         const messageContent = messageTemplate.message_template;
 
         console.log(`📝 Enviando mensagem: "${messageContent.substring(0, 50)}..."`);
 
         // Inserir mensagem de reengajamento
         const { error: messageError } = await supabaseClient
-          .from('mensagens')
+          .from('messages')
           .insert({
-            user_id: conversation.user_id,
-            avatar_id: conversation.avatar_id,
-            conteudo: messageContent,
+            conversation_id: activity.conversation_id,
+            content: messageContent,
             is_user: false
-          })
+          });
 
         if (messageError) {
-          console.error('❌ Erro ao inserir mensagem:', messageError)
-          throw messageError
+          console.error('❌ Erro ao inserir mensagem:', messageError);
+          throw messageError;
         }
 
         // Marcar notificação como enviada
         const { error: markError } = await supabaseClient
-          .rpc('mark_notification_sent', {
-            p_user_id: conversation.user_id,
-            p_avatar_id: conversation.avatar_id
-          })
+          .from('conversation_activity')
+          .update({ notification_sent: true })
+          .eq('conversation_id', activity.conversation_id);
 
         if (markError) {
-          console.error('❌ Erro ao marcar notificação:', markError)
-          throw markError
+          console.error('❌ Erro ao marcar notificação:', markError);
+          throw markError;
         }
 
         processedCount++;
-        console.log(`✅ Mensagem enviada com sucesso para ${conversation.avatar_nome}`);
+        console.log(`✅ Mensagem enviada com sucesso para ${avatar.nome}`);
 
       } catch (error) {
-        const errorMsg = `Erro ao processar conversa ${conversation.avatar_nome}: ${error.message}`;
+        const errorMsg = `Erro ao processar conversa: ${error.message}`;
         console.error(`❌ ${errorMsg}`);
         errors.push(errorMsg);
       }

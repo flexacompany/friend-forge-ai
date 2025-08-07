@@ -18,10 +18,10 @@ serve(async (req) => {
     const { message, avatarConfig, conversationHistory } = await req.json();
 
     // Construir o prompt do sistema baseado na configuração do avatar
-    let systemPrompt = `Você é ${avatarConfig.name}, um assistente virtual com as seguintes características:
+    let systemPrompt = `Você é ${avatarConfig.nome}, um assistente virtual com as seguintes características:
 
-Personalidade: ${getPersonalityDescription(avatarConfig.personality)}
-Tom de voz: ${getToneDescription(avatarConfig.tone)}`;
+Personalidade: ${getPersonalityDescription(avatarConfig.personalidade)}
+Tom de voz: ${getToneDescription(avatarConfig.tom)}`;
 
     if (avatarConfig.background) {
       systemPrompt += `\n\nSua história/background: ${avatarConfig.background}`;
@@ -47,7 +47,7 @@ Tom de voz: ${getToneDescription(avatarConfig.tone)}`;
       for (const historyMessage of recentHistory) {
         messages.push({
           role: historyMessage.is_user ? 'user' : 'assistant',
-          content: historyMessage.conteudo
+          content: historyMessage.content
         });
       }
     }

@@ -29,15 +29,17 @@ export const useNotifications = () => {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
       const { data: recentMessages, error } = await supabase
-        .from('mensagens')
+        .from('messages')
         .select(`
           id,
-          avatar_id,
-          conteudo,
+          content,
           created_at,
-          avatares!inner(nome)
+          conversations!inner(
+            avatar_id,
+            avatares!inner(nome)
+          )
         `)
-        .eq('user_id', user.id)
+        .eq('conversations.user_id', user.id)
         .eq('is_user', false)
         .gte('created_at', fiveMinutesAgo)
         .order('created_at', { ascending: false });
@@ -48,11 +50,11 @@ export const useNotifications = () => {
       }
 
       if (recentMessages && recentMessages.length > 0) {
-        const formattedNotifications = recentMessages.map(msg => ({
+        const formattedNotifications = recentMessages.map((msg: any) => ({
           id: msg.id,
-          avatar_id: msg.avatar_id,
-          avatar_nome: (msg.avatares as { nome: string })?.nome || 'Avatar',
-          conteudo: msg.conteudo,
+          avatar_id: msg.conversations.avatar_id,
+          avatar_nome: msg.conversations.avatares?.nome || 'Avatar',
+          conteudo: msg.content,
           created_at: msg.created_at
         }));
 
@@ -150,8 +152,7 @@ export const useNotifications = () => {
             {
               event: 'INSERT',
               schema: 'public',
-              table: 'mensagens',
-              filter: `user_id=eq.${user.id}`,
+              table: 'messages',
             },
             (payload) => {
               // Só processar se for uma mensagem de avatar

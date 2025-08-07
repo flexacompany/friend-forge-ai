@@ -1,10 +1,10 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -23,42 +23,48 @@ import {
   Brain,
   Wand2,
   ArrowLeft,
-  Upload,
   Camera
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Database } from "@/integrations/supabase/types";
+
+type AvatarPersonality = Database["public"]["Enums"]["avatar_personality"];
+type AvatarTone = Database["public"]["Enums"]["avatar_tone"];
+type AvatarCategory = Database["public"]["Enums"]["avatar_category"];
 
 interface AvatarData {
   id: string;
   nome: string;
-  personalidade: 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
-  tom: 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
+  personalidade: AvatarPersonality;
+  tom: AvatarTone;
+  categoria: AvatarCategory;
   avatar: string;
-  avatarType: 'emoji' | 'image';
+  avatar_type: string;
   background: string | null;
   interests: string | null;
+  created_at: string;
 }
 
 interface SystemAvatarData {
   id: string;
   nome: string;
-  categoria: string;
-  profissao: string;
-  personalidade: string;
-  tom: string;
+  personalidade: AvatarPersonality;
+  tom: AvatarTone;
+  categoria: AvatarCategory;
   avatar: string;
-  background: string;
-  interests: string;
-  caracteristicas: string;
-  inspiracao: string;
+  profissao: string | null;
+  caracteristicas: string | null;
+  background: string | null;
+  interests: string | null;
+  inspiracao: string | null;
 }
 
 interface FormData {
   nome: string;
-  personalidade: AvatarData['personalidade'] | '';
-  tom: AvatarData['tom'] | '';
+  personalidade: AvatarPersonality | '';
+  tom: AvatarTone | '';
   avatar: string;
   avatarType: 'emoji' | 'image';
   background: string;
@@ -85,42 +91,11 @@ const TONE_OPTIONS = [
 
 const DEFAULT_EMOJIS = ['🤖', '👨‍💼', '👩‍💼', '🧑‍🏫', '👨‍🔬', '👩‍🔬', '🧑‍💻', '👨‍⚕️', '👩‍⚕️', '🧑‍🎨'];
 
-// Helper function to map system avatar personality to our types
-const mapPersonalityType = (systemPersonality: string): AvatarData['personalidade'] => {
-  const normalizedPersonality = systemPersonality.toLowerCase();
-  
-  if (normalizedPersonality.includes('amig') || normalizedPersonality.includes('friend')) return 'friend';
-  if (normalizedPersonality.includes('consult') || normalizedPersonality.includes('consultant')) return 'consultant';
-  if (normalizedPersonality.includes('coleg') || normalizedPersonality.includes('colleague')) return 'colleague';
-  if (normalizedPersonality.includes('mentor')) return 'mentor';
-  if (normalizedPersonality.includes('coach')) return 'coach';
-  if (normalizedPersonality.includes('terap') || normalizedPersonality.includes('therapist')) return 'therapist';
-  
-  // Default fallback
-  return 'friend';
-};
-
-// Helper function to map system avatar tone to our types
-const mapToneType = (systemTone: string): AvatarData['tom'] => {
-  const normalizedTone = systemTone.toLowerCase();
-  
-  if (normalizedTone.includes('amig') || normalizedTone.includes('friendly')) return 'friendly';
-  if (normalizedTone.includes('formal')) return 'formal';
-  if (normalizedTone.includes('divert') || normalizedTone.includes('playful')) return 'playful';
-  if (normalizedTone.includes('empat') || normalizedTone.includes('empathetic')) return 'empathetic';
-  if (normalizedTone.includes('espir') || normalizedTone.includes('witty')) return 'witty';
-  if (normalizedTone.includes('sabi') || normalizedTone.includes('wise')) return 'wise';
-  
-  // Default fallback
-  return 'friendly';
-};
-
 const Personalize = () => {
   const [avatares, setAvatares] = useState<AvatarData[]>([]);
   const [systemAvatars, setSystemAvatars] = useState<SystemAvatarData[]>([]);
   const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedSystemAvatar, setSelectedSystemAvatar] = useState<SystemAvatarData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,25 +125,11 @@ const Personalize = () => {
 
   const loadAvatares = async () => {
     try {
-      const { data, error } = await supabase
-        .from('avatares')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_user_avatares');
 
       if (error) throw error;
       
-      const typedAvatares: AvatarData[] = (data || []).map(avatar => ({
-        id: avatar.id,
-        nome: avatar.nome,
-        personalidade: avatar.personalidade as AvatarData['personalidade'],
-        tom: avatar.tom as AvatarData['tom'],
-        avatar: avatar.avatar,
-        avatarType: 'emoji' as 'emoji' | 'image',
-        background: avatar.background,
-        interests: avatar.interests
-      }));
-      
-      setAvatares(typedAvatares);
+      setAvatares(data || []);
     } catch (error) {
       console.error('Erro ao carregar avatares:', error);
       toast.error('Erro ao carregar avatares');
@@ -177,8 +138,7 @@ const Personalize = () => {
 
   const loadSystemAvatars = async () => {
     try {
-      // Usando a função personalizada que lida com RLS corretamente
-      const { data, error } = await supabase.rpc('list_system_avatars', { limit_count: 6 });
+      const { data, error } = await supabase.rpc('get_system_avatares', { limit_count: 6 });
       
       if (error) {
         console.error('Erro ao carregar avatares do sistema:', error);
@@ -198,13 +158,12 @@ const Personalize = () => {
       return;
     }
 
-    // More explicit type guards with explicit type assertions
-    const personalidade = formData.personalidade as AvatarData['personalidade'];
-    const tom = formData.tom as AvatarData['tom'];
+    // Validação de tipos
+    const personalidade = formData.personalidade as AvatarPersonality;
+    const tom = formData.tom as AvatarTone;
 
-    // Validate that we have valid enum values
-    const validPersonalities: AvatarData['personalidade'][] = ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'];
-    const validTones: AvatarData['tom'][] = ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'];
+    const validPersonalities: AvatarPersonality[] = ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'];
+    const validTones: AvatarTone[] = ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'];
 
     if (!validPersonalities.includes(personalidade) || !validTones.includes(tom)) {
       toast.error('Valores de personalidade ou tom inválidos');
@@ -273,15 +232,13 @@ const Personalize = () => {
     }
 
     try {
-      // Inserir o avatar do sistema como um avatar pessoal do usuário
-      // Using helper functions to properly map the personality and tone
       const { error } = await supabase
         .from('avatares')
         .insert({
           user_id: user.id,
           nome: systemAvatar.nome,
-          personalidade: mapPersonalityType(systemAvatar.personalidade),
-          tom: mapToneType(systemAvatar.tom),
+          personalidade: systemAvatar.personalidade,
+          tom: systemAvatar.tom,
           avatar: systemAvatar.avatar,
           background: systemAvatar.background,
           interests: systemAvatar.interests
@@ -304,7 +261,7 @@ const Personalize = () => {
       personalidade: avatar.personalidade,
       tom: avatar.tom,
       avatar: avatar.avatar,
-      avatarType: avatar.avatarType,
+      avatarType: avatar.avatar_type as 'emoji' | 'image',
       background: avatar.background || '',
       interests: avatar.interests || ''
     });
@@ -346,7 +303,7 @@ const Personalize = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+      if (file.size > 2 * 1024 * 1024) {
         toast.error('Imagem muito grande. Máximo 2MB.');
         return;
       }
@@ -364,32 +321,25 @@ const Personalize = () => {
   };
 
   const handlePersonalityChange = (personalityId: string) => {
-    const personality = PERSONALITY_TYPES.find(p => p.id === personalityId);
-    if (personality) {
-      setFormData(prev => ({ 
-        ...prev, 
-        personalidade: personality.id as AvatarData['personalidade'] 
-      }));
-    }
+    setFormData(prev => ({ 
+      ...prev, 
+      personalidade: personalityId as AvatarPersonality
+    }));
   };
 
   const handleToneChange = (toneId: string) => {
-    const tone = TONE_OPTIONS.find(t => t.id === toneId);
-    if (tone) {
-      setFormData(prev => ({ 
-        ...prev, 
-        tom: tone.id as AvatarData['tom'] 
-      }));
-    }
+    setFormData(prev => ({ 
+      ...prev, 
+      tom: toneId as AvatarTone
+    }));
   };
 
   const renderAvatar = (avatar: AvatarData | SystemAvatarData) => {
-    const isSystemAvatar = 'categoria' in avatar;
-    const avatarType = isSystemAvatar ? 'emoji' : (avatar as AvatarData).avatarType;
+    const avatarType = 'avatar_type' in avatar ? avatar.avatar_type : 'emoji';
     
     return (
       <Avatar className="h-12 w-12 flex-shrink-0">
-        {avatarType === 'image' && !isSystemAvatar ? (
+        {avatarType === 'image' ? (
           <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
         ) : (
           <AvatarFallback className="text-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
@@ -704,9 +654,11 @@ const Personalize = () => {
                         </Badge>
                       </div>
                       
-                      <p className="text-sm text-slate-600 line-clamp-3">
-                        {avatar.caracteristicas}
-                      </p>
+                      {avatar.caracteristicas && (
+                        <p className="text-sm text-slate-600 line-clamp-3">
+                          {avatar.caracteristicas}
+                        </p>
+                      )}
                       
                       <Button
                         onClick={() => handleSystemAvatarSelect(avatar)}
