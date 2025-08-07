@@ -198,6 +198,20 @@ const Personalize = () => {
       return;
     }
 
+    // Type guards to ensure we have valid values
+    const isValidPersonality = (value: string): value is AvatarData['personalidade'] => {
+      return ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'].includes(value);
+    };
+
+    const isValidTone = (value: string): value is AvatarData['tom'] => {
+      return ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'].includes(value);
+    };
+
+    if (!isValidPersonality(formData.personalidade) || !isValidTone(formData.tom)) {
+      toast.error('Valores de personalidade ou tom inválidos');
+      return;
+    }
+
     setIsLoading(true);
     
     const { data: { user } } = await supabase.auth.getUser();
