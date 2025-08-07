@@ -75,6 +75,36 @@ const TONE_OPTIONS = [
 
 const DEFAULT_EMOJIS = ['🤖', '👨‍💼', '👩‍💼', '🧑‍🏫', '👨‍🔬', '👩‍🔬', '🧑‍💻', '👨‍⚕️', '👩‍⚕️', '🧑‍🎨'];
 
+// Helper function to map system avatar personality to our types
+const mapPersonalityType = (systemPersonality: string): AvatarData['personalidade'] => {
+  const normalizedPersonality = systemPersonality.toLowerCase();
+  
+  if (normalizedPersonality.includes('amig') || normalizedPersonality.includes('friend')) return 'friend';
+  if (normalizedPersonality.includes('consult') || normalizedPersonality.includes('consultant')) return 'consultant';
+  if (normalizedPersonality.includes('coleg') || normalizedPersonality.includes('colleague')) return 'colleague';
+  if (normalizedPersonality.includes('mentor')) return 'mentor';
+  if (normalizedPersonality.includes('coach')) return 'coach';
+  if (normalizedPersonality.includes('terap') || normalizedPersonality.includes('therapist')) return 'therapist';
+  
+  // Default fallback
+  return 'friend';
+};
+
+// Helper function to map system avatar tone to our types
+const mapToneType = (systemTone: string): AvatarData['tom'] => {
+  const normalizedTone = systemTone.toLowerCase();
+  
+  if (normalizedTone.includes('amig') || normalizedTone.includes('friendly')) return 'friendly';
+  if (normalizedTone.includes('formal')) return 'formal';
+  if (normalizedTone.includes('divert') || normalizedTone.includes('playful')) return 'playful';
+  if (normalizedTone.includes('empat') || normalizedTone.includes('empathetic')) return 'empathetic';
+  if (normalizedTone.includes('espir') || normalizedTone.includes('witty')) return 'witty';
+  if (normalizedTone.includes('sabi') || normalizedTone.includes('wise')) return 'wise';
+  
+  // Default fallback
+  return 'friendly';
+};
+
 const Personalize = () => {
   const [avatares, setAvatares] = useState<AvatarData[]>([]);
   const [systemAvatars, setSystemAvatars] = useState<SystemAvatarData[]>([]);
@@ -221,13 +251,14 @@ const Personalize = () => {
 
     try {
       // Inserir o avatar do sistema como um avatar pessoal do usuário
+      // Using helper functions to properly map the personality and tone
       const { error } = await supabase
         .from('avatares')
         .insert({
           user_id: user.id,
           nome: systemAvatar.nome,
-          personalidade: systemAvatar.personalidade as AvatarData['personalidade'],
-          tom: systemAvatar.tom as AvatarData['tom'],
+          personalidade: mapPersonalityType(systemAvatar.personalidade),
+          tom: mapToneType(systemAvatar.tom),
           avatar: systemAvatar.avatar,
           background: systemAvatar.background,
           interests: systemAvatar.interests
