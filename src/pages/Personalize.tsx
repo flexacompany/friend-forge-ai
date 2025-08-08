@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,6 +96,7 @@ const Personalize = () => {
   const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,6 +151,62 @@ const Personalize = () => {
     }
   };
 
+  const uploadImageToSupabase = async (file: File): Promise<string> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Usuário não autenticado');
+
+    // Gerar nome único para o arquivo
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    // Obter URL pública da imagem
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 2MB.');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    
+    try {
+      const imageUrl = await uploadImageToSupabase(file);
+      
+      setFormData(prev => ({
+        ...prev,
+        avatar: imageUrl,
+        avatarType: 'image'
+      }));
+      
+      toast.success('Imagem enviada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast.error('Erro ao fazer upload da imagem');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome || !formData.personalidade || !formData.tom) {
@@ -189,6 +245,7 @@ const Personalize = () => {
             personalidade: personalidade,
             tom: tom,
             avatar: formData.avatar,
+            avatar_type: formData.avatarType,
             background: formData.background || null,
             interests: formData.interests || null
           })
@@ -206,6 +263,7 @@ const Personalize = () => {
             personalidade: personalidade,
             tom: tom,
             avatar: formData.avatar,
+            avatar_type: formData.avatarType,
             background: formData.background || null,
             interests: formData.interests || null
           });
@@ -240,6 +298,7 @@ const Personalize = () => {
           personalidade: systemAvatar.personalidade,
           tom: systemAvatar.tom,
           avatar: systemAvatar.avatar,
+          avatar_type: 'emoji',
           background: systemAvatar.background,
           interests: systemAvatar.interests
         });
@@ -298,26 +357,6 @@ const Personalize = () => {
     });
     setEditingAvatar(null);
     setShowCreateForm(false);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Imagem muito grande. Máximo 2MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData(prev => ({
-          ...prev,
-          avatar: event.target?.result as string,
-          avatarType: 'image'
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handlePersonalityChange = (personalityId: string) => {
@@ -398,6 +437,7 @@ const Personalize = () => {
                   </Avatar>
                   <Button
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
                     className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg"
                   >
                     <Camera className="h-4 w-4" />
@@ -419,6 +459,9 @@ const Personalize = () => {
                 <CardDescription className="text-lg text-slate-600">
                   {selectedPersonality?.name} • {selectedTone?.name}
                 </CardDescription>
+              )}
+              {isUploadingImage && (
+                <p className="text-sm text-emerald-600">Enviando imagem...</p>
               )}
             </CardHeader>
 
@@ -567,7 +610,7 @@ const Personalize = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isLoading || !formData.nome || !formData.personalidade || !formData.tom}
+                    disabled={isLoading || isUploadingImage || !formData.nome || !formData.personalidade || !formData.tom}
                     className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] h-12 text-lg font-semibold"
                   >
                     {isLoading ? 'Salvando...' : editingAvatar ? 'Salvar Alterações' : 'Criar Avatar'}
