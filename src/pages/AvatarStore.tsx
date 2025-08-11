@@ -211,7 +211,7 @@ const AvatarStore = () => {
       // Add avatar to user's collection with correct column names
       const { error: insertError } = await supabase
         .from('avatares')
-        .insert({
+        .insert([{
           user_id: user.id,
           nome: `${storeAvatar.avatar.nome} (da Loja)`,
           personalidade: storeAvatar.avatar.personalidade,
@@ -219,7 +219,7 @@ const AvatarStore = () => {
           categoria: storeAvatar.avatar.categoria,
           avatar: storeAvatar.avatar.avatar,
           avatar_type: storeAvatar.avatar.avatar_type
-        });
+        }]);
 
       if (insertError) throw insertError;
 
