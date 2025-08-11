@@ -1,71 +1,37 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { 
+  User, 
+  Palette, 
+  MessageSquare, 
   Sparkles, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  MessageCircle, 
-  Settings,
-  User,
-  Heart,
-  Briefcase,
-  Users,
-  BookOpen,
-  Target,
-  Brain,
-  Wand2,
-  ArrowLeft,
-  Camera,
-  Store
+  ArrowLeft, 
+  Save, 
+  Upload,
+  Store,
+  Plus,
+  Edit
 } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useParams } from "react-router-dom";
 
-type AvatarPersonality = Database["public"]["Enums"]["avatar_personality"];
-type AvatarTone = Database["public"]["Enums"]["avatar_tone"];
-type AvatarCategory = Database["public"]["Enums"]["avatar_category"];
-
-interface AvatarData {
-  id: string;
-  nome: string;
-  personalidade: AvatarPersonality;
-  tom: AvatarTone;
-  categoria: AvatarCategory;
-  avatar: string;
-  avatar_type: string;
-  background: string | null;
-  interests: string | null;
-  created_at: string;
-}
-
-interface SystemAvatarData {
-  id: string;
-  nome: string;
-  personalidade: AvatarPersonality;
-  tom: AvatarTone;
-  categoria: AvatarCategory;
-  avatar: string;
-  profissao: string | null;
-  caracteristicas: string | null;
-  background: string | null;
-  interests: string | null;
-  inspiracao: string | null;
-}
+type AvatarPersonality = 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
+type AvatarTone = 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
+type AvatarCategory = 'personal' | 'professional' | 'educational' | 'entertainment';
 
 interface FormData {
   nome: string;
-  personalidade: AvatarPersonality | '';
-  tom: AvatarTone | '';
+  personalidade: AvatarPersonality;
+  tom: AvatarTone;
   avatar: string;
   avatarType: 'emoji' | 'image';
   background: string;
@@ -75,40 +41,15 @@ interface FormData {
   storeDescription: string;
 }
 
-const PERSONALITY_TYPES = [
-  { id: 'friend', name: 'Amigo', icon: Heart, description: 'Casual, próximo e sempre disponível para uma conversa' },
-  { id: 'consultant', name: 'Consultor', icon: Briefcase, description: 'Profissional e estratégico, oferece insights práticos' },
-  { id: 'colleague', name: 'Colega de Trabalho', icon: Users, description: 'Colaborativo e motivador para projetos' },
-  { id: 'mentor', name: 'Mentor', icon: BookOpen, description: 'Sábio e orientador para desenvolvimento pessoal' },
-  { id: 'coach', name: 'Coach', icon: Target, description: 'Focado em resultados e superação de desafios' },
-  { id: 'therapist', name: 'Terapeuta', icon: Brain, description: 'Empático e compreensivo, oferece suporte emocional' }
-] as const;
-
-const TONE_OPTIONS = [
-  { id: 'friendly', name: 'Amigável', description: 'Caloroso e próximo' },
-  { id: 'formal', name: 'Formal', description: 'Profissional e respeitoso' },
-  { id: 'playful', name: 'Divertido', description: 'Descontraído e alegre' },
-  { id: 'empathetic', name: 'Empático', description: 'Compreensivo e acolhedor' },
-  { id: 'witty', name: 'Espirituoso', description: 'Inteligente com humor sutil' },
-  { id: 'wise', name: 'Sábio', description: 'Reflexivo e profundo' }
-] as const;
-
-const DEFAULT_EMOJIS = ['🤖', '👨‍💼', '👩‍💼', '🧑‍🏫', '👨‍🔬', '👩‍🔬', '🧑‍💻', '👨‍⚕️', '👩‍⚕️', '🧑‍🎨'];
-
 const Personalize = () => {
-  const [avatares, setAvatares] = useState<AvatarData[]>([]);
-  const [systemAvatars, setSystemAvatars] = useState<SystemAvatarData[]>([]);
-  const [editingAvatar, setEditingAvatar] = useState<AvatarData | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { id } = useParams();
+  const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState<FormData>({
     nome: '',
-    personalidade: '',
-    tom: '',
+    personalidade: 'friend',
+    tom: 'friendly',
     avatar: '🤖',
     avatarType: 'emoji',
     background: '',
@@ -118,181 +59,180 @@ const Personalize = () => {
     storeDescription: ''
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
+
   useEffect(() => {
-    checkAuth();
-    loadAvatares();
-    loadSystemAvatars();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/auth');
+    if (isEditing && id) {
+      loadAvatarData(id);
     }
-  };
+  }, [id, isEditing]);
 
-  const loadAvatares = async () => {
+  const loadAvatarData = async (avatarId: string) => {
     try {
-      const { data, error } = await supabase.rpc('get_user_avatares');
+      const { data, error } = await supabase
+        .from('avatares')
+        .select('*')
+        .eq('id', avatarId)
+        .single();
 
       if (error) throw error;
-      
-      setAvatares(data || []);
+
+      if (data) {
+        setFormData({
+          nome: data.nome,
+          personalidade: data.personalidade,
+          tom: data.tom,
+          avatar: data.avatar,
+          avatarType: data.avatar_type,
+          background: data.background || '',
+          interests: data.interests || '',
+          publishToStore: false,
+          storeTitle: '',
+          storeDescription: ''
+        });
+
+        if (data.avatar_type === 'image') {
+          setImageUrl(data.avatar);
+        }
+      }
     } catch (error) {
-      console.error('Erro ao carregar avatares:', error);
-      toast.error('Erro ao carregar avatares');
+      console.error('Erro ao carregar avatar:', error);
+      toast.error('Erro ao carregar dados do avatar');
     }
   };
 
-  const loadSystemAvatars = async () => {
+  const personalities: { value: AvatarPersonality; label: string; description: string }[] = [
+    { value: 'friend', label: 'Amigo', description: 'Casual, descontraído e próximo' },
+    { value: 'consultant', label: 'Consultor', description: 'Profissional e orientado a soluções' },
+    { value: 'colleague', label: 'Colega', description: 'Colaborativo e respeitoso' },
+    { value: 'mentor', label: 'Mentor', description: 'Experiente e orientador' },
+    { value: 'coach', label: 'Coach', description: 'Motivador e focado em resultados' },
+    { value: 'therapist', label: 'Terapeuta', description: 'Empático e compreensivo' }
+  ];
+
+  const tones: { value: AvatarTone; label: string; description: string }[] = [
+    { value: 'friendly', label: 'Amigável', description: 'Caloroso e acolhedor' },
+    { value: 'formal', label: 'Formal', description: 'Profissional e estruturado' },
+    { value: 'playful', label: 'Brincalhão', description: 'Divertido e descontraído' },
+    { value: 'empathetic', label: 'Empático', description: 'Compreensivo e solidário' },
+    { value: 'witty', label: 'Espirituoso', description: 'Inteligente e bem-humorado' },
+    { value: 'wise', label: 'Sábio', description: 'Reflexivo e ponderado' }
+  ];
+
+  const categories: { value: AvatarCategory; label: string }[] = [
+    { value: 'personal', label: 'Pessoal' },
+    { value: 'professional', label: 'Profissional' },
+    { value: 'educational', label: 'Educacional' },
+    { value: 'entertainment', label: 'Entretenimento' }
+  ];
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 5MB.');
+      return;
+    }
+
     try {
-      const { data, error } = await supabase.rpc('get_system_avatares', { limit_count: 6 });
+      setIsLoading(true);
       
-      if (error) {
-        console.error('Erro ao carregar avatares do sistema:', error);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Você precisa estar logado para fazer upload de imagens');
         return;
       }
 
-      setSystemAvatars(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar avatares do sistema:', error);
-    }
-  };
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-  const uploadImageToSupabase = async (file: File): Promise<string> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Usuário não autenticado');
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
 
-    // Gerar nome único para o arquivo
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      if (error) throw error;
 
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file);
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
 
-    if (uploadError) throw uploadError;
-
-    // Obter URL pública da imagem
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Imagem muito grande. Máximo 2MB.');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione um arquivo de imagem válido.');
-      return;
-    }
-
-    setIsUploadingImage(true);
-    
-    try {
-      const imageUrl = await uploadImageToSupabase(file);
-      
+      setImageUrl(publicUrl);
       setFormData(prev => ({
         ...prev,
-        avatar: imageUrl,
+        avatar: publicUrl,
         avatarType: 'image'
       }));
-      
-      toast.success('Imagem enviada com sucesso!');
+
+      toast.success('Imagem carregada com sucesso!');
     } catch (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
+      console.error('Erro no upload:', error);
       toast.error('Erro ao fazer upload da imagem');
     } finally {
-      setIsUploadingImage(false);
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nome || !formData.personalidade || !formData.tom) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
-      return;
-    }
-
-    if (formData.publishToStore && !formData.storeTitle) {
-      toast.error('Por favor, forneça um título para publicar na loja');
-      return;
-    }
-
-    // Validação de tipos
-    const personalidade = formData.personalidade as AvatarPersonality;
-    const tom = formData.tom as AvatarTone;
-
-    const validPersonalities: AvatarPersonality[] = ['friend', 'consultant', 'colleague', 'mentor', 'coach', 'therapist'];
-    const validTones: AvatarTone[] = ['friendly', 'formal', 'playful', 'empathetic', 'witty', 'wise'];
-
-    if (!validPersonalities.includes(personalidade) || !validTones.includes(tom)) {
-      toast.error('Valores de personalidade ou tom inválidos');
-      return;
-    }
-
-    setIsLoading(true);
     
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Usuário não autenticado');
-      setIsLoading(false);
+    if (!formData.nome.trim()) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+
+    if (formData.publishToStore && !formData.storeTitle.trim()) {
+      toast.error('Título da loja é obrigatório quando publicar na loja');
       return;
     }
 
     try {
+      setIsLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Você precisa estar logado');
+        return;
+      }
+
+      const avatarData = {
+        nome: formData.nome,
+        personalidade: formData.personalidade,
+        tom: formData.tom,
+        avatar: formData.avatar,
+        avatar_type: formData.avatarType,
+        background: formData.background || null,
+        interests: formData.interests || null,
+        user_id: user.id
+      };
+
       let avatarId: string;
 
-      if (editingAvatar) {
-        // Atualizar avatar existente
+      if (isEditing && id) {
         const { error } = await supabase
           .from('avatares')
-          .update({
-            nome: formData.nome,
-            personalidade: personalidade,
-            tom: tom,
-            avatar: formData.avatar,
-            avatar_type: formData.avatarType,
-            background: formData.background || null,
-            interests: formData.interests || null
-          })
-          .eq('id', editingAvatar.id);
+          .update(avatarData)
+          .eq('id', id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
-        avatarId = editingAvatar.id;
+        avatarId = id;
         toast.success('Avatar atualizado com sucesso!');
       } else {
-        // Criar novo avatar
-        const { data: newAvatar, error } = await supabase
+        const { data, error } = await supabase
           .from('avatares')
-          .insert({
-            user_id: user.id,
-            nome: formData.nome,
-            personalidade: personalidade,
-            tom: tom,
-            avatar: formData.avatar,
-            avatar_type: formData.avatarType,
-            background: formData.background || null,
-            interests: formData.interests || null
-          })
-          .select()
+          .insert(avatarData)
+          .select('id')
           .single();
 
         if (error) throw error;
-        avatarId = newAvatar.id;
+        avatarId = data.id;
         toast.success('Avatar criado com sucesso!');
       }
 
-      // Publicar na loja se solicitado
-      if (formData.publishToStore && !editingAvatar) {
+      // Publish to store if requested
+      if (formData.publishToStore && avatarId) {
         const { error: storeError } = await supabase
           .from('avatar_store')
           .insert({
@@ -304,14 +244,13 @@ const Personalize = () => {
 
         if (storeError) {
           console.error('Erro ao publicar na loja:', storeError);
-          toast.error('Avatar criado, mas erro ao publicar na loja');
+          toast.error('Avatar criado, mas houve erro ao publicar na loja');
         } else {
-          toast.success('Avatar criado e publicado na loja!');
+          toast.success('Avatar publicado na loja com sucesso!');
         }
       }
 
-      resetForm();
-      loadAvatares();
+      navigate('/chat');
     } catch (error) {
       console.error('Erro ao salvar avatar:', error);
       toast.error('Erro ao salvar avatar');
@@ -320,614 +259,343 @@ const Personalize = () => {
     }
   };
 
-  const handleSystemAvatarSelect = async (systemAvatar: SystemAvatarData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Usuário não autenticado');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('avatares')
-        .insert({
-          user_id: user.id,
-          nome: systemAvatar.nome,
-          personalidade: systemAvatar.personalidade,
-          tom: systemAvatar.tom,
-          avatar: systemAvatar.avatar,
-          avatar_type: 'emoji',
-          background: systemAvatar.background,
-          interests: systemAvatar.interests
-        });
-
-      if (error) throw error;
-      
-      toast.success(`Avatar "${systemAvatar.nome}" adicionado aos seus avatares!`);
-      loadAvatares();
-    } catch (error) {
-      console.error('Erro ao adicionar avatar do sistema:', error);
-      toast.error('Erro ao adicionar avatar');
-    }
+  const getCategoryFromPersonality = (personality: AvatarPersonality): AvatarCategory => {
+    const mapping: Record<AvatarPersonality, AvatarCategory> = {
+      'friend': 'personal',
+      'consultant': 'professional',
+      'colleague': 'professional',
+      'mentor': 'educational',
+      'coach': 'professional',
+      'therapist': 'personal'
+    };
+    return mapping[personality] || 'personal';
   };
-
-  const handleEdit = (avatar: AvatarData) => {
-    setEditingAvatar(avatar);
-    setFormData({
-      nome: avatar.nome,
-      personalidade: avatar.personalidade,
-      tom: avatar.tom,
-      avatar: avatar.avatar,
-      avatarType: avatar.avatar_type as 'emoji' | 'image',
-      background: avatar.background || '',
-      interests: avatar.interests || ''
-    });
-    setShowCreateForm(true);
-  };
-
-  const handleDelete = async (avatarId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este avatar?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('avatares')
-        .delete()
-        .eq('id', avatarId);
-
-      if (error) throw error;
-      toast.success('Avatar excluído com sucesso!');
-      loadAvatares();
-    } catch (error) {
-      console.error('Erro ao excluir avatar:', error);
-      toast.error('Erro ao excluir avatar');
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      nome: '',
-      personalidade: '',
-      tom: '',
-      avatar: '🤖',
-      avatarType: 'emoji',
-      background: '',
-      interests: '',
-      publishToStore: false,
-      storeTitle: '',
-      storeDescription: ''
-    });
-    setEditingAvatar(null);
-    setShowCreateForm(false);
-  };
-
-  const handlePersonalityChange = (personalityId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      personalidade: personalityId as AvatarPersonality
-    }));
-  };
-
-  const handleToneChange = (toneId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      tom: toneId as AvatarTone
-    }));
-  };
-
-  const renderAvatar = (avatar: AvatarData | SystemAvatarData) => {
-    const avatarType = 'avatar_type' in avatar ? avatar.avatar_type : 'emoji';
-    
-    return (
-      <Avatar className="h-12 w-12 flex-shrink-0">
-        {avatarType === 'image' ? (
-          <AvatarImage src={avatar.avatar} alt={avatar.nome} className="object-cover" />
-        ) : (
-          <AvatarFallback className="text-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-            {avatar.avatar}
-          </AvatarFallback>
-        )}
-      </Avatar>
-    );
-  };
-
-  const selectedPersonality = PERSONALITY_TYPES.find(p => p.id === formData.personalidade);
-  const selectedTone = TONE_OPTIONS.find(t => t.id === formData.tom);
-
-  if (showCreateForm) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container-safe">
-        {/* Header */}
-        <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-3">
-                <Button
-                  onClick={resetForm}
-                  className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Voltar</span>
-                </Button>
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg">
-                  <Wand2 className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                    {editingAvatar ? 'Editar Avatar' : 'Criar Novo Avatar'}
-                  </h1>
-                  <p className="text-sm text-slate-300">Configure a personalidade e características</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-            <CardHeader className="text-center pb-8">
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24 shadow-lg">
-                    {formData.avatarType === 'image' ? (
-                      <AvatarImage src={formData.avatar} alt="Avatar Preview" className="object-cover" />
-                    ) : (
-                      <AvatarFallback className="text-4xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-                        {formData.avatar}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-              
-              <CardTitle className="text-3xl font-bold text-slate-800 mb-2">
-                {formData.nome || 'Novo Avatar'}
-              </CardTitle>
-              {formData.personalidade && formData.tom && (
-                <CardDescription className="text-lg text-slate-600">
-                  {selectedPersonality?.name} • {selectedTone?.name}
-                </CardDescription>
-              )}
-              {isUploadingImage && (
-                <p className="text-sm text-emerald-600">Enviando imagem...</p>
-              )}
-            </CardHeader>
-
-            <CardContent className="space-y-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Nome */}
-                <div className="space-y-2">
-                  <Label htmlFor="nome" className="text-lg font-semibold text-slate-700">
-                    Nome do Avatar *
-                  </Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Ex: Alex, Maria, Dr. Silva..."
-                    className="text-lg p-4 border-2 border-slate-200 focus:border-emerald-500 rounded-xl"
-                    required
-                  />
-                </div>
-
-                {/* Avatar Selection */}
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold text-slate-700">Escolha um Emoji</Label>
-                  <div className="grid grid-cols-5 gap-3">
-                    {DEFAULT_EMOJIS.map((emoji) => (
-                      <Button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, avatar: emoji, avatarType: 'emoji' }))}
-                        className={`h-16 w-16 text-2xl rounded-xl transition-all duration-200 ${
-                          formData.avatar === emoji && formData.avatarType === 'emoji'
-                            ? 'bg-emerald-500 text-white shadow-lg scale-105' 
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        {emoji}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Personalidade */}
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold text-slate-700">Personalidade *</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {PERSONALITY_TYPES.map((personality) => {
-                      const Icon = personality.icon;
-                      const isSelected = formData.personalidade === personality.id;
-                      
-                      return (
-                        <Card 
-                          key={personality.id}
-                          className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${
-                            isSelected 
-                              ? 'border-2 border-emerald-500 bg-emerald-50 shadow-lg' 
-                              : 'border-2 border-slate-200 hover:border-emerald-300'
-                          }`}
-                          onClick={() => handlePersonalityChange(personality.id)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start space-x-3">
-                              <div className={`p-2 rounded-lg ${isSelected ? 'bg-emerald-500' : 'bg-slate-100'}`}>
-                                <Icon className={`h-5 w-5 ${isSelected ? 'text-white' : 'text-slate-600'}`} />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className={`font-semibold mb-1 ${isSelected ? 'text-emerald-800' : 'text-slate-800'}`}>
-                                  {personality.name}
-                                </h3>
-                                <p className={`text-sm ${isSelected ? 'text-emerald-600' : 'text-slate-600'}`}>
-                                  {personality.description}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tom */}
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold text-slate-700">Tom de Voz *</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {TONE_OPTIONS.map((tone) => (
-                      <Card
-                        key={tone.id}
-                        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
-                          formData.tom === tone.id
-                            ? 'border-2 border-teal-500 bg-teal-50 shadow-lg'
-                            : 'border-2 border-slate-200 hover:border-teal-300'
-                        }`}
-                        onClick={() => handleToneChange(tone.id)}
-                      >
-                        <CardContent className="p-4">
-                          <h3 className={`font-semibold mb-1 ${formData.tom === tone.id ? 'text-teal-800' : 'text-slate-800'}`}>
-                            {tone.name}
-                          </h3>
-                          <p className={`text-sm ${formData.tom === tone.id ? 'text-teal-600' : 'text-slate-600'}`}>
-                            {tone.description}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Background */}
-                <div className="space-y-2">
-                  <Label htmlFor="background" className="text-lg font-semibold text-slate-700">
-                    História/Background
-                  </Label>
-                  <Textarea
-                    id="background"
-                    value={formData.background}
-                    onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
-                    placeholder="Conte um pouco sobre a história e contexto deste avatar..."
-                    className="min-h-[100px] border-2 border-slate-200 focus:border-emerald-500 rounded-xl p-4"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Interests */}
-                <div className="space-y-2">
-                  <Label htmlFor="interests" className="text-lg font-semibold text-slate-700">
-                    Interesses e Especialidades
-                  </Label>
-                  <Textarea
-                    id="interests"
-                    value={formData.interests}
-                    onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
-                    placeholder="Liste os principais interesses, hobbies e áreas de especialidade..."
-                    className="min-h-[100px] border-2 border-slate-200 focus:border-emerald-500 rounded-xl p-4"
-                    rows={4}
-                  />
-                </div>
-
-                {/* Publish to Store Section */}
-                {!editingAvatar && (
-                  <div className="space-y-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-100">
-                    <div className="flex items-center space-x-3">
-                      <Store className="h-6 w-6 text-purple-600" />
-                      <h3 className="text-lg font-semibold text-purple-800">Compartilhar na Loja</h3>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="publishToStore"
-                        checked={formData.publishToStore}
-                        onCheckedChange={(checked) => 
-                          setFormData(prev => ({ ...prev, publishToStore: checked as boolean }))
-                        }
-                      />
-                      <Label htmlFor="publishToStore" className="text-purple-700 font-medium">
-                        Publicar este avatar na Loja Comunitária
-                      </Label>
-                    </div>
-
-                    {formData.publishToStore && (
-                      <div className="space-y-4 mt-4">
-                        <div>
-                          <Label htmlFor="storeTitle" className="text-purple-700 font-semibold">
-                            Título na Loja *
-                          </Label>
-                          <Input
-                            id="storeTitle"
-                            value={formData.storeTitle}
-                            onChange={(e) => setFormData(prev => ({ ...prev, storeTitle: e.target.value }))}
-                            placeholder="Digite um título atrativo para seu avatar"
-                            className="border-purple-200 focus:border-purple-500"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="storeDescription" className="text-purple-700 font-semibold">
-                            Descrição na Loja
-                          </Label>
-                          <Textarea
-                            id="storeDescription"
-                            value={formData.storeDescription}
-                            onChange={(e) => setFormData(prev => ({ ...prev, storeDescription: e.target.value }))}
-                            placeholder="Descreva as características e funcionalidades do seu avatar"
-                            className="border-purple-200 focus:border-purple-500"
-                            rows={3}
-                          />
-                        </div>
-                        
-                        <div className="bg-purple-100 p-4 rounded-lg">
-                          <p className="text-sm text-purple-700">
-                            <strong>Ao publicar na loja:</strong> Outros usuários poderão ver, avaliar e adicionar seu avatar 
-                            às suas coleções. Você será creditado como o criador original.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                  <Button
-                    type="button"
-                    onClick={resetForm}
-                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-300 hover:border-slate-400 rounded-xl h-12 text-lg font-semibold"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isLoading || isUploadingImage || !formData.nome || !formData.personalidade || !formData.tom || (formData.publishToStore && !formData.storeTitle)}
-                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] h-12 text-lg font-semibold"
-                  >
-                    {isLoading ? 'Salvando...' : editingAvatar ? 'Salvar Alterações' : (formData.publishToStore ? 'Criar e Publicar' : 'Criar Avatar')}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 container-safe">
-      {/* Header */}
       <header className="bg-slate-800/90 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                  Seus Avatares
-                </h1>
-                <p className="text-sm text-slate-300">Personalize seus companheiros de IA</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => navigate('/avatar-store')}
-                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white border-0 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
-              >
-                <Store className="h-4 w-4" />
-                <span className="hidden sm:inline">Loja</span>
-              </Button>
               <Button
                 onClick={() => navigate('/chat')}
                 className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
               >
-                <MessageCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Chat</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span>Voltar</span>
               </Button>
-              <Button
-                onClick={() => navigate('/settings')}
-                className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Configurações</span>
-              </Button>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-xl shadow-lg">
+                {isEditing ? <Edit className="h-6 w-6 text-white" /> : <Plus className="h-6 w-6 text-white" />}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  {isEditing ? 'Editar Avatar' : 'Criar Novo Avatar'}
+                </h1>
+                <p className="text-sm text-slate-300">
+                  {isEditing ? 'Modifique as características do seu avatar' : 'Personalize seu assistente de IA'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* System Avatars Section */}
-        {systemAvatars.length > 0 && (
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Avatares Disponíveis</h2>
-                <p className="text-slate-300">Escolha entre nossos avatares pré-configurados</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {systemAvatars.map((avatar) => (
-                <Card key={avatar.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center space-x-4">
-                      {renderAvatar(avatar)}
-                      <div className="flex-1">
-                        <CardTitle className="text-xl text-slate-800">{avatar.nome}</CardTitle>
-                        <CardDescription className="text-sm font-medium text-slate-600">
-                          {avatar.profissao}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                          {avatar.categoria}
-                        </Badge>
-                        <Badge className="bg-teal-100 text-teal-700 border-teal-200">
-                          {avatar.personalidade}
-                        </Badge>
-                      </div>
-                      
-                      {avatar.caracteristicas && (
-                        <p className="text-sm text-slate-600 line-clamp-3">
-                          {avatar.caracteristicas}
-                        </p>
-                      )}
-                      
-                      <Button
-                        onClick={() => handleSystemAvatarSelect(avatar)}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar aos Meus Avatares
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Personal Avatars Section */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Meus Avatares</h2>
-            <p className="text-slate-300">Gerencie seus avatares personalizados</p>
-          </div>
-          <Button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-6 py-3"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Criar Avatar
-          </Button>
-        </div>
-
-        {avatares.length === 0 ? (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Avatar Preview */}
           <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 rounded-full mb-6">
-                <User className="h-12 w-12 text-white" />
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center space-x-2 text-slate-800">
+                <User className="h-5 w-5" />
+                <span>Preview do Avatar</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center space-y-4">
+              <Avatar className="h-24 w-24 shadow-lg">
+                {formData.avatarType === 'image' && imageUrl ? (
+                  <AvatarImage src={imageUrl} alt={formData.nome} className="object-cover" />
+                ) : (
+                  <AvatarFallback className="text-4xl bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                    {formData.avatar}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-slate-800">{formData.nome || 'Seu Avatar'}</h3>
+                <div className="flex justify-center space-x-2 mt-2">
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                    {personalities.find(p => p.value === formData.personalidade)?.label}
+                  </Badge>
+                  <Badge className="bg-pink-100 text-pink-700 border-pink-200">
+                    {tones.find(t => t.value === formData.tom)?.label}
+                  </Badge>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">Nenhum avatar criado ainda</h3>
-              <p className="text-slate-600 text-center mb-8 max-w-md">
-                Crie seu primeiro avatar personalizado para começar conversas incríveis com IA!
-              </p>
-              <Button
-                onClick={() => setShowCreateForm(true)}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-8 py-3"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Criar Meu Primeiro Avatar
-              </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {avatares.map((avatar) => {
-              const personality = PERSONALITY_TYPES.find(p => p.id === avatar.personalidade);
-              const tone = TONE_OPTIONS.find(t => t.id === avatar.tom);
-              
-              return (
-                <Card key={avatar.id} className="bg-white/95 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-200 hover:scale-[1.02]">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {renderAvatar(avatar)}
-                        <div>
-                          <CardTitle className="text-xl text-slate-800">{avatar.nome}</CardTitle>
-                          <CardDescription className="text-sm font-medium">
-                            {personality?.name} • {tone?.name}
-                          </CardDescription>
+
+          {/* Basic Information */}
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-slate-800">
+                <User className="h-5 w-5" />
+                <span>Informações Básicas</span>
+              </CardTitle>
+              <CardDescription>Defina o nome e aparência do seu avatar</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome do Avatar *</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="Ex: Alex, Dr. Silva, Coach Maria..."
+                  required
+                />
+              </div>
+
+              <div className="space-y-4">
+                <Label>Aparência do Avatar</Label>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="emoji">Emoji</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="emoji"
+                        value={formData.avatarType === 'emoji' ? formData.avatar : '🤖'}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            avatar: e.target.value,
+                            avatarType: 'emoji'
+                          }));
+                          setImageUrl('');
+                        }}
+                        placeholder="🤖"
+                        className="w-20 text-center text-2xl"
+                        maxLength={2}
+                      />
+                      <div className="text-xs text-slate-500 mt-2">
+                        Cole um emoji aqui
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <span className="text-slate-500 text-sm">ou</span>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <Label htmlFor="image-upload">Upload de Imagem</Label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300"
+                        disabled={isLoading}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {isLoading ? 'Carregando...' : 'Escolher Imagem'}
+                      </Button>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      Máximo 5MB (JPG, PNG, GIF)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personality */}
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-slate-800">
+                <Palette className="h-5 w-5" />
+                <span>Personalidade</span>
+              </CardTitle>
+              <CardDescription>Como você gostaria que seu avatar se comporte?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Tipo de Personalidade</Label>
+                <Select
+                  value={formData.personalidade}
+                  onValueChange={(value: AvatarPersonality) => 
+                    setFormData(prev => ({ ...prev, personalidade: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {personalities.map((personality) => (
+                      <SelectItem key={personality.value} value={personality.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{personality.label}</span>
+                          <span className="text-sm text-slate-500">{personality.description}</span>
                         </div>
-                      </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tom de Conversa</Label>
+                <Select
+                  value={formData.tom}
+                  onValueChange={(value: AvatarTone) => 
+                    setFormData(prev => ({ ...prev, tom: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tones.map((tone) => (
+                      <SelectItem key={tone.value} value={tone.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{tone.label}</span>
+                          <span className="text-sm text-slate-500">{tone.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Background & Interests */}
+          <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-slate-800">
+                <MessageSquare className="h-5 w-5" />
+                <span>Contexto e Interesses</span>
+              </CardTitle>
+              <CardDescription>Adicione contexto para conversas mais relevantes</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="background">Background/Contexto</Label>
+                <Textarea
+                  id="background"
+                  value={formData.background}
+                  onChange={(e) => setFormData(prev => ({ ...prev, background: e.target.value }))}
+                  placeholder="Ex: Sou estudante de medicina, trabalho em startup, tenho filhos pequenos..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="interests">Interesses e Hobbies</Label>
+                <Textarea
+                  id="interests"
+                  value={formData.interests}
+                  onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
+                  placeholder="Ex: tecnologia, esportes, culinária, leitura, viagens..."
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Store Publishing */}
+          {!isEditing && (
+            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-slate-800">
+                  <Store className="h-5 w-5" />
+                  <span>Compartilhar na Loja</span>
+                </CardTitle>
+                <CardDescription>Permita que outros usuários usem seu avatar</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="publishToStore"
+                    checked={formData.publishToStore}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, publishToStore: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="publishToStore">
+                    Publicar este avatar na Loja Comunitária
+                  </Label>
+                </div>
+
+                {formData.publishToStore && (
+                  <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="space-y-2">
+                      <Label htmlFor="storeTitle">Título na Loja *</Label>
+                      <Input
+                        id="storeTitle"
+                        value={formData.storeTitle}
+                        onChange={(e) => setFormData(prev => ({ ...prev, storeTitle: e.target.value }))}
+                        placeholder="Ex: Assistente Médico Amigável, Coach Motivacional..."
+                        required={formData.publishToStore}
+                      />
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                          {personality?.name}
-                        </Badge>
-                        <Badge className="bg-teal-100 text-teal-700 border-teal-200">
-                          {tone?.name}
-                        </Badge>
-                      </div>
-                      
-                      {avatar.background && (
-                        <p className="text-sm text-slate-600 line-clamp-2">
-                          {avatar.background}
-                        </p>
-                      )}
-                      
-                      {avatar.interests && (
-                        <p className="text-xs text-slate-500 line-clamp-2">
-                          <strong>Interesses:</strong> {avatar.interests}
-                        </p>
-                      )}
-                      
-                      <div className="flex space-x-2">
-                        <Button
-                          onClick={() => handleEdit(avatar)}
-                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 hover:border-slate-300 rounded-lg transition-all duration-200"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(avatar.id)}
-                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-200 hover:border-red-300 rounded-lg transition-all duration-200"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </Button>
-                      </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="storeDescription">Descrição (opcional)</Label>
+                      <Textarea
+                        id="storeDescription"
+                        value={formData.storeDescription}
+                        onChange={(e) => setFormData(prev => ({ ...prev, storeDescription: e.target.value }))}
+                        placeholder="Descreva o que torna este avatar especial e como ele pode ajudar outros usuários..."
+                        rows={3}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+
+                    <div className="text-sm text-purple-700 bg-purple-100 p-3 rounded">
+                      <strong>Categoria:</strong> {categories.find(c => c.value === getCategoryFromPersonality(formData.personalidade))?.label}
+                      <br />
+                      <span className="text-purple-600">A categoria é determinada automaticamente baseada na personalidade escolhida.</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              onClick={() => navigate('/chat')}
+              className="bg-slate-200 hover:bg-slate-300 text-slate-700"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8"
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Salvando...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Save className="h-4 w-4" />
+                  <span>{isEditing ? 'Atualizar Avatar' : 'Criar Avatar'}</span>
+                </div>
+              )}
+            </Button>
           </div>
-        )}
+        </form>
       </div>
     </div>
   );

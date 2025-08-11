@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,8 +83,7 @@ const AvatarStore = () => {
         .from('avatar_store')
         .select(`
           *,
-          avatar:avatares(nome, avatar, avatar_type, personalidade, tom, categoria),
-          creator:profiles(username)
+          avatar:avatares(nome, avatar, avatar_type, personalidade, tom, categoria)
         `);
 
       // Apply sorting
@@ -100,12 +98,31 @@ const AvatarStore = () => {
           query = query.order('created_at', { ascending: false });
       }
 
-      const { data, error } = await query;
+      const { data: storeData, error } = await query;
 
       if (error) throw error;
+
+      // Get creator usernames separately
+      const creatorIds = storeData?.map(item => item.creator_id) || [];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', creatorIds);
+
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError);
+      }
+
+      // Merge data
+      const enrichedData = storeData?.map(item => ({
+        ...item,
+        creator: {
+          username: profiles?.find(p => p.id === item.creator_id)?.username || 'Usuário Anônimo'
+        }
+      })) || [];
       
       // Filter by category and search term
-      let filteredData = data || [];
+      let filteredData = enrichedData;
       
       if (selectedCategory !== 'all') {
         filteredData = filteredData.filter(item => 
@@ -132,17 +149,34 @@ const AvatarStore = () => {
 
   const loadAvatarRatings = async (avatarStoreId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data: ratingsData, error } = await supabase
         .from('avatar_ratings')
-        .select(`
-          *,
-          user:profiles(username)
-        `)
+        .select('*')
         .eq('avatar_store_id', avatarStoreId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRatings(data || []);
+
+      // Get user data separately
+      const userIds = ratingsData?.map(rating => rating.user_id) || [];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error loading user profiles:', profilesError);
+      }
+
+      // Merge rating data with user info
+      const enrichedRatings = ratingsData?.map(rating => ({
+        ...rating,
+        user: {
+          username: profiles?.find(p => p.id === rating.user_id)?.username || 'Usuário Anônimo'
+        }
+      })) || [];
+
+      setRatings(enrichedRatings);
     } catch (error) {
       console.error('Erro ao carregar avaliações:', error);
     }
