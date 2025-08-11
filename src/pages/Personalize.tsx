@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,12 +22,14 @@ import {
   Brain,
   Wand2,
   ArrowLeft,
-  Camera
+  Camera,
+  Store
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types";
+import PublishToStoreButton from "@/components/PublishToStoreButton";
 
 type AvatarPersonality = Database["public"]["Enums"]["avatar_personality"];
 type AvatarTone = Database["public"]["Enums"]["avatar_tone"];
@@ -45,6 +46,7 @@ interface AvatarData {
   background: string | null;
   interests: string | null;
   created_at: string;
+  is_published_in_store?: boolean;
 }
 
 interface SystemAvatarData {
@@ -125,7 +127,12 @@ const Personalize = () => {
 
   const loadAvatares = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_avatares');
+      const { data, error } = await supabase
+        .from('avatares')
+        .select('*')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('is_system', false)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
@@ -352,6 +359,16 @@ const Personalize = () => {
 
   const selectedPersonality = PERSONALITY_TYPES.find(p => p.id === formData.personalidade);
   const selectedTone = TONE_OPTIONS.find(t => t.id === formData.tom);
+
+  const handlePublishChange = (avatarId: string, published: boolean) => {
+    setAvatares(prev => 
+      prev.map(avatar => 
+        avatar.id === avatarId 
+          ? { ...avatar, is_published_in_store: published }
+          : avatar
+      )
+    );
+  };
 
   if (showCreateForm) {
     return (
@@ -681,13 +698,22 @@ const Personalize = () => {
             <h2 className="text-2xl font-bold text-white mb-2">Meus Avatares</h2>
             <p className="text-slate-300">Gerencie seus avatares personalizados</p>
           </div>
-          <Button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-6 py-3"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Criar Avatar
-          </Button>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => navigate('/store')}
+              className="bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-600 hover:border-emerald-500 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-6 py-3"
+            >
+              <Store className="h-5 w-5 mr-2" />
+              Loja de Avatares
+            </Button>
+            <Button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] px-6 py-3"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Criar Avatar
+            </Button>
+          </div>
         </div>
 
         {avatares.length === 0 ? (
@@ -753,21 +779,29 @@ const Personalize = () => {
                         </p>
                       )}
                       
-                      <div className="flex space-x-2">
-                        <Button
-                          onClick={() => handleEdit(avatar)}
-                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 hover:border-slate-300 rounded-lg transition-all duration-200"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(avatar.id)}
-                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-200 hover:border-red-300 rounded-lg transition-all duration-200"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </Button>
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => handleEdit(avatar)}
+                            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border-2 border-slate-200 hover:border-slate-300 rounded-lg transition-all duration-200"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(avatar.id)}
+                            className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 border-2 border-red-200 hover:border-red-300 rounded-lg transition-all duration-200"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </div>
+                        
+                        <PublishToStoreButton
+                          avatarId={avatar.id}
+                          isPublished={avatar.is_published_in_store || false}
+                          onPublishChange={(published) => handlePublishChange(avatar.id, published)}
+                        />
                       </div>
                     </div>
                   </CardContent>

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import UserSettings from "./pages/UserSettings";
+import AvatarStore from "./pages/AvatarStore";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +76,10 @@ const App = () => {
             <Route 
               path="/personalize" 
               element={session ? <Personalize /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/store" 
+              element={session ? <AvatarStore /> : <Navigate to="/auth" replace />} 
             />
             <Route 
               path="/chat" 
