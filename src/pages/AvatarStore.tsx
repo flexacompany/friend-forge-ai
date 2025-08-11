@@ -208,15 +208,15 @@ const AvatarStore = () => {
         return;
       }
 
-      // Add avatar to user's collection with correct column names
+      // Add avatar to user's collection - fix apenas o TypeScript aqui
       const { error: insertError } = await supabase
         .from('avatares')
         .insert({
           user_id: user.id,
           nome: `${storeAvatar.avatar.nome} (da Loja)`,
-          personalidade: storeAvatar.avatar.personalidade as any,
-          tom: storeAvatar.avatar.tom as any,
-          categoria: storeAvatar.avatar.categoria as any,
+          personalidade: storeAvatar.avatar.personalidade as "amigavel" | "profissional" | "casual" | "formal" | "energetico" | "calmo",
+          tom: storeAvatar.avatar.tom as "amigavel" | "profissional" | "casual" | "formal" | "energetico" | "calmo",
+          categoria: storeAvatar.avatar.categoria as "personal" | "business" | "education" | "health" | "creative" | "technical",
           avatar: storeAvatar.avatar.avatar,
           avatar_type: storeAvatar.avatar.avatar_type
         });
