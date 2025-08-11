@@ -14,6 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      avatar_downloads: {
+        Row: {
+          avatar_store_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          avatar_store_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          avatar_store_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_downloads_avatar_store_id_fkey"
+            columns: ["avatar_store_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_store"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      avatar_ratings: {
+        Row: {
+          avatar_store_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          overall_rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_store_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          overall_rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_store_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          overall_rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_ratings_avatar_store_id_fkey"
+            columns: ["avatar_store_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_store"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      avatar_store: {
+        Row: {
+          avatar_id: string
+          average_rating: number | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          downloads_count: number
+          id: string
+          is_featured: boolean
+          is_verified: boolean
+          rating_count: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_id: string
+          average_rating?: number | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          downloads_count?: number
+          id?: string
+          is_featured?: boolean
+          is_verified?: boolean
+          rating_count?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_id?: string
+          average_rating?: number | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          downloads_count?: number
+          id?: string
+          is_featured?: boolean
+          is_verified?: boolean
+          rating_count?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_store_avatar_id_fkey"
+            columns: ["avatar_id"]
+            isOneToOne: false
+            referencedRelation: "avatares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       avatares: {
         Row: {
           avatar: string

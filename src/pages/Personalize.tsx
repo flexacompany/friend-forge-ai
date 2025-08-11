@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Sparkles, 
   Plus, 
@@ -22,7 +23,8 @@ import {
   Brain,
   Wand2,
   ArrowLeft,
-  Camera
+  Camera,
+  Store
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -68,6 +70,9 @@ interface FormData {
   avatarType: 'emoji' | 'image';
   background: string;
   interests: string;
+  publishToStore: boolean;
+  storeTitle: string;
+  storeDescription: string;
 }
 
 const PERSONALITY_TYPES = [
@@ -107,7 +112,10 @@ const Personalize = () => {
     avatar: '🤖',
     avatarType: 'emoji',
     background: '',
-    interests: ''
+    interests: '',
+    publishToStore: false,
+    storeTitle: '',
+    storeDescription: ''
   });
 
   useEffect(() => {
@@ -214,6 +222,11 @@ const Personalize = () => {
       return;
     }
 
+    if (formData.publishToStore && !formData.storeTitle) {
+      toast.error('Por favor, forneça um título para publicar na loja');
+      return;
+    }
+
     // Validação de tipos
     const personalidade = formData.personalidade as AvatarPersonality;
     const tom = formData.tom as AvatarTone;
@@ -236,6 +249,8 @@ const Personalize = () => {
     }
 
     try {
+      let avatarId: string;
+
       if (editingAvatar) {
         // Atualizar avatar existente
         const { error } = await supabase
@@ -252,10 +267,11 @@ const Personalize = () => {
           .eq('id', editingAvatar.id);
 
         if (error) throw error;
+        avatarId = editingAvatar.id;
         toast.success('Avatar atualizado com sucesso!');
       } else {
         // Criar novo avatar
-        const { error } = await supabase
+        const { data: newAvatar, error } = await supabase
           .from('avatares')
           .insert({
             user_id: user.id,
@@ -266,10 +282,32 @@ const Personalize = () => {
             avatar_type: formData.avatarType,
             background: formData.background || null,
             interests: formData.interests || null
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        avatarId = newAvatar.id;
         toast.success('Avatar criado com sucesso!');
+      }
+
+      // Publicar na loja se solicitado
+      if (formData.publishToStore && !editingAvatar) {
+        const { error: storeError } = await supabase
+          .from('avatar_store')
+          .insert({
+            avatar_id: avatarId,
+            creator_id: user.id,
+            title: formData.storeTitle,
+            description: formData.storeDescription || null
+          });
+
+        if (storeError) {
+          console.error('Erro ao publicar na loja:', storeError);
+          toast.error('Avatar criado, mas erro ao publicar na loja');
+        } else {
+          toast.success('Avatar criado e publicado na loja!');
+        }
       }
 
       resetForm();
@@ -353,7 +391,10 @@ const Personalize = () => {
       avatar: '🤖',
       avatarType: 'emoji',
       background: '',
-      interests: ''
+      interests: '',
+      publishToStore: false,
+      storeTitle: '',
+      storeDescription: ''
     });
     setEditingAvatar(null);
     setShowCreateForm(false);
@@ -599,6 +640,67 @@ const Personalize = () => {
                   />
                 </div>
 
+                {/* Publish to Store Section */}
+                {!editingAvatar && (
+                  <div className="space-y-4 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-100">
+                    <div className="flex items-center space-x-3">
+                      <Store className="h-6 w-6 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-purple-800">Compartilhar na Loja</h3>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="publishToStore"
+                        checked={formData.publishToStore}
+                        onCheckedChange={(checked) => 
+                          setFormData(prev => ({ ...prev, publishToStore: checked as boolean }))
+                        }
+                      />
+                      <Label htmlFor="publishToStore" className="text-purple-700 font-medium">
+                        Publicar este avatar na Loja Comunitária
+                      </Label>
+                    </div>
+
+                    {formData.publishToStore && (
+                      <div className="space-y-4 mt-4">
+                        <div>
+                          <Label htmlFor="storeTitle" className="text-purple-700 font-semibold">
+                            Título na Loja *
+                          </Label>
+                          <Input
+                            id="storeTitle"
+                            value={formData.storeTitle}
+                            onChange={(e) => setFormData(prev => ({ ...prev, storeTitle: e.target.value }))}
+                            placeholder="Digite um título atrativo para seu avatar"
+                            className="border-purple-200 focus:border-purple-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="storeDescription" className="text-purple-700 font-semibold">
+                            Descrição na Loja
+                          </Label>
+                          <Textarea
+                            id="storeDescription"
+                            value={formData.storeDescription}
+                            onChange={(e) => setFormData(prev => ({ ...prev, storeDescription: e.target.value }))}
+                            placeholder="Descreva as características e funcionalidades do seu avatar"
+                            className="border-purple-200 focus:border-purple-500"
+                            rows={3}
+                          />
+                        </div>
+                        
+                        <div className="bg-purple-100 p-4 rounded-lg">
+                          <p className="text-sm text-purple-700">
+                            <strong>Ao publicar na loja:</strong> Outros usuários poderão ver, avaliar e adicionar seu avatar 
+                            às suas coleções. Você será creditado como o criador original.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button
@@ -610,10 +712,10 @@ const Personalize = () => {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isLoading || isUploadingImage || !formData.nome || !formData.personalidade || !formData.tom}
+                    disabled={isLoading || isUploadingImage || !formData.nome || !formData.personalidade || !formData.tom || (formData.publishToStore && !formData.storeTitle)}
                     className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] h-12 text-lg font-semibold"
                   >
-                    {isLoading ? 'Salvando...' : editingAvatar ? 'Salvar Alterações' : 'Criar Avatar'}
+                    {isLoading ? 'Salvando...' : editingAvatar ? 'Salvar Alterações' : (formData.publishToStore ? 'Criar e Publicar' : 'Criar Avatar')}
                   </Button>
                 </div>
               </form>
@@ -642,6 +744,13 @@ const Personalize = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button
+                onClick={() => navigate('/avatar-store')}
+                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white border-0 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
+              >
+                <Store className="h-4 w-4" />
+                <span className="hidden sm:inline">Loja</span>
+              </Button>
               <Button
                 onClick={() => navigate('/chat')}
                 className="bg-slate-700 hover:bg-slate-600 text-white border-slate-600 hover:border-slate-500 rounded-lg transition-all duration-200 flex items-center space-x-2 px-4"
