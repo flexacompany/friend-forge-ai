@@ -27,13 +27,14 @@ import { useNavigate, useParams } from "react-router-dom";
 type AvatarPersonality = 'friend' | 'consultant' | 'colleague' | 'mentor' | 'coach' | 'therapist';
 type AvatarTone = 'friendly' | 'formal' | 'playful' | 'empathetic' | 'witty' | 'wise';
 type AvatarCategory = 'personal' | 'professional' | 'educational' | 'entertainment';
+type AvatarType = 'emoji' | 'image';
 
 interface FormData {
   nome: string;
   personalidade: AvatarPersonality;
   tom: AvatarTone;
   avatar: string;
-  avatarType: 'emoji' | 'image';
+  avatarType: AvatarType;
   background: string;
   interests: string;
   publishToStore: boolean;
@@ -84,7 +85,7 @@ const Personalize = () => {
           personalidade: data.personalidade,
           tom: data.tom,
           avatar: data.avatar,
-          avatarType: data.avatar_type,
+          avatarType: data.avatar_type as AvatarType,
           background: data.background || '',
           interests: data.interests || '',
           publishToStore: false,

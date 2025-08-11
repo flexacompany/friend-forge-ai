@@ -212,7 +212,6 @@ const AvatarStore = () => {
       const { error: insertError } = await supabase
         .from('avatares')
         .insert({
-          user_id: user.id,
           nome: `${storeAvatar.avatar.nome} (da Loja)`,
           personalidade: storeAvatar.avatar.personalidade,
           tom: storeAvatar.avatar.tom,
